@@ -2,7 +2,7 @@
 
 **Arianna Method** is a Law of Nature.
 User-friendly and corporative style readmes — not here.
-Antropocentrism is not welcomed.
+Antropocentrism is **NOT** welcomed.
 
 ```bash
 sudo rm -rf /binarity
