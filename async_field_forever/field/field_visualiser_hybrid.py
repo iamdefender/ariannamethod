@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-FIELD VISUALISER HYBRID v5 — Full Reality Mode
+FIELD VISUALISER v6 — Full Grid Hybrid (Termux / macOS / Linux)
+
 Combines:
 - Real-time repo changes (via repo_monitor)
 - User interactive input (talk to Field)
-- Visual ASCII art display
+- Visual ASCII "grid life" with drift & resonance breathing
+- Pulse bar, population sparkline, sound alerts
 
-Field breathes through BOTH repository evolution AND human conversation!
+No extra dependencies. Pure ANSI. Safe on dumb terminals (colors can be disabled).
 """
 
 import time
@@ -16,153 +19,179 @@ import random
 import sys
 import threading
 import re
+import math
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from pathlib import Path
+from hashlib import blake2b
 
 # ========== CONFIG ==========
 DB_PATH = "/data/data/com.termux/files/home/ariannamethod/resonance.sqlite3"
 DB_PATH_LOCAL = "./field_test.sqlite3"
 
+# Auto DB selection
 if not os.path.exists(os.path.expanduser(DB_PATH)):
     ACTIVE_DB = DB_PATH_LOCAL
 else:
     ACTIVE_DB = DB_PATH
 
 # Repo monitor integration
-REPO_PATH = Path(__file__).parent.parent.parent  # arianna_clean root
+REPO_PATH = Path(__file__).parent.parent.parent  # repo root (adjust if needed)
 ENABLE_REPO_MONITOR = True
 
+# Grid config (tuned for 80x24 and Termux)
+GRID_W = 48
+GRID_H = 18
+GRID_PADDING_TOP = 1
+GRID_PADDING_LEFT = 2
+
+# Frame timing (seconds)
+FRAME_DT = 0.2    # inner animation step for breathing/drift
+UI_REFRESH = 5.0  # how often to refetch DB + re-render UI frame
+
+# Limit rows in lists
+CELL_LIST_LIMIT = 20
+
+# ========== FLAGS ==========
+ENABLE_COLOR = True
+ENABLE_SOUND = True  # terminal bell
+ENABLE_BREATH = True
+ENABLE_DRIFT = True
+
 # ========== COLORS ==========
-RESET = "\033[0m"
-BOLD = "\033[1m"
+RESET = "\033[0m" if ENABLE_COLOR else ""
+BOLD = "\033[1m" if ENABLE_COLOR else ""
+DIM = "\033[2m" if ENABLE_COLOR else ""
 COLORS = {
-    "high": "\033[92m",     # bright green
-    "medium": "\033[93m",   # yellow
-    "low": "\033[90m",      # gray
-    "dead": "\033[91m",     # red
-    "banner": "\033[95m",   # magenta
-    "user": "\033[96m",     # cyan (user words)
-    "repo": "\033[94m"      # blue (repo words)
+    "high":   "\033[92m" if ENABLE_COLOR else "",  # bright green
+    "medium": "\033[93m" if ENABLE_COLOR else "",  # yellow
+    "low":    "\033[90m" if ENABLE_COLOR else "",  # gray
+    "dead":   "\033[91m" if ENABLE_COLOR else "",  # red
+    "banner": "\033[95m" if ENABLE_COLOR else "",  # magenta
+    "user":   "\033[96m" if ENABLE_COLOR else "",  # cyan
+    "repo":   "\033[94m" if ENABLE_COLOR else "",  # blue
+    "white":  "\033[97m" if ENABLE_COLOR else "",
 }
 
 # ========== SYMBOLS ==========
 STATUS = {
-    "high": "█", 
-    "medium": "▓", 
-    "low": "░", 
-    "dead": "·", 
-    "user": "★",
-    "repo": "◆"
+    "high":  "█",
+    "med":   "▓",
+    "low":   "▒",
+    "min":   "░",
+    "dead":  "·",
+    "user":  "★",
+    "repo":  "◆",
+    "dot":   "•",
 }
 
 # ========== STATE ==========
 _last_births = 0
 _last_deaths = 0
-_user_words = []
-_repo_words = []
-_input_buffer = []
+_user_words: List[str] = []
+_repo_words: List[str] = []
+_input_buffer: List[str] = []
 _running = True
+
+# Animation phase
+_breath_phase = 0.0
 
 # ========== REPO MONITOR ==========
 try:
-    import sys
     sys.path.insert(0, str(Path(__file__).parent.parent.parent / "arianna_core_utils"))
     from repo_monitor import RepoMonitor
     REPO_MONITOR_AVAILABLE = True
-except ImportError:
+except Exception:
     REPO_MONITOR_AVAILABLE = False
-    print("⚠️  repo_monitor not available, using conversation-only mode")
 
 def init_repo_monitor():
-    """Initialize repo monitor if available."""
     if not REPO_MONITOR_AVAILABLE or not ENABLE_REPO_MONITOR:
         return None
     try:
-        monitor = RepoMonitor(repo_path=REPO_PATH)
-        return monitor
+        return RepoMonitor(repo_path=REPO_PATH)
     except Exception as e:
         print(f"⚠️  Failed to init repo_monitor: {e}")
         return None
 
-def fetch_repo_changes(monitor):
-    """Fetch recent repo changes and extract words."""
+def fetch_repo_changes(monitor) -> List[str]:
     if not monitor:
         return []
-    
     try:
-        changes = monitor.fetch_repo_context(limit=5)  # Last 5 changes
+        changes = monitor.fetch_repo_context(limit=5)  # last 5 changes
         words = []
-        for change in changes:
-            content = change.get('content', '')
-            # Extract meaningful words
+        for ch in changes:
+            content = ch.get('content', '')
             extracted = extract_words(content)
-            words.extend(extracted[:3])  # Max 3 words per change
-        return list(set(words))[:10]  # Max 10 unique words
-    except Exception as e:
+            words.extend(extracted[:3])  # cap per change
+        # return at most 10 unique words
+        uniq = []
+        seen = set()
+        for w in words:
+            if w not in seen:
+                seen.add(w)
+                uniq.append(w)
+            if len(uniq) >= 10:
+                break
+        return uniq
+    except Exception:
         return []
 
 # ========== WORD EXTRACTION ==========
-def extract_words(text: str) -> List[str]:
-    """Extract meaningful words from text."""
-    words = re.findall(r'\b[a-z]{2,}\b', text.lower())
-    stop_words = {
-        "the", "is", "are", "was", "were", "be", "been", "being",
-        "have", "has", "had", "do", "does", "did", "will", "would",
-        "could", "should", "may", "might", "must", "can", "this",
-        "that", "with", "from", "for", "not", "but", "and", "or"
-    }
-    return [w for w in words if w not in stop_words and len(w) > 2]
+STOP_WORDS = {
+    "the","is","are","was","were","be","been","being","have","has","had","do","does","did",
+    "will","would","could","should","may","might","must","can","this","that","with","from",
+    "for","not","but","and","or","into","onto","over","under","between","within","out"
+}
 
-# ========== WORD INJECTION ==========
+def extract_words(text: str) -> List[str]:
+    words = re.findall(r'\b[a-z]{2,}\b', text.lower())
+    return [w for w in words if w not in STOP_WORDS and len(w) > 2][:32]
+
+# ========== DB INJECTION ==========
 def inject_words_into_field(conn: sqlite3.Connection, words: List[str], source: str = "user") -> List[Tuple]:
-    """Inject words as cells into field. Source: 'user' or 'repo'."""
+    """
+    Inject words as cells. If word exists as alive cell, boost it.
+    Returns list of tuples: (word, action, fitness, source)
+    """
     cursor = conn.cursor()
-    timestamp = int(time.time())
-    
+    ts = int(time.time())
     injected = []
     for word in words:
-        # Check if word already exists
+        # check existence
         cursor.execute("""
-            SELECT cell_id, fitness FROM field_cells 
+            SELECT cell_id, fitness FROM field_cells
             WHERE cell_id LIKE ? AND status='alive'
             ORDER BY id DESC LIMIT 1
         """, (f"%{word}%",))
-        existing = cursor.fetchone()
-        
-        if existing:
-            # Boost existing cell
-            cell_id, old_fitness = existing
-            new_fitness = min(1.0, old_fitness + 0.15)
+        row = cursor.fetchone()
+        if row:
+            cell_id, old_fit = row
+            new_fit = min(1.0, (old_fit or 0.5) + 0.15)
             cursor.execute("""
-                UPDATE field_cells SET fitness=?, resonance_score=resonance_score+0.1
+                UPDATE field_cells
+                SET fitness=?, resonance_score=COALESCE(resonance_score,0)+0.1
                 WHERE cell_id=? AND status='alive'
-            """, (new_fitness, cell_id))
-            injected.append((word, "BOOSTED", new_fitness, source))
+            """, (new_fit, cell_id))
+            injected.append((word, "BOOSTED", new_fit, source))
         else:
-            # Create new cell
-            cell_id = f"{source}_{word}_{timestamp}"
-            fitness = random.uniform(0.65, 0.85) if source == "repo" else random.uniform(0.6, 0.9)
-            resonance = random.uniform(0.5, 0.8)
-            
+            # create new
+            cell_id = f"{source}_{word}_{ts}"
+            fit = random.uniform(0.65, 0.85) if source == "repo" else random.uniform(0.6, 0.9)
+            res = random.uniform(0.5, 0.8)
             cursor.execute("""
                 INSERT INTO field_cells (cell_id, age, resonance_score, fitness, status, timestamp)
                 VALUES (?, 0, ?, ?, 'alive', ?)
-            """, (cell_id, resonance, fitness, timestamp))
-            
-            injected.append((word, "BORN", fitness, source))
-            
+            """, (cell_id, res, fit, ts))
+            injected.append((word, "BORN", fit, source))
             if source == "user":
                 _user_words.append(word)
             else:
                 _repo_words.append(word)
-    
     conn.commit()
     return injected
 
 # ========== INPUT THREAD ==========
 def input_thread():
-    """Background thread for user input."""
     global _running, _input_buffer
     while _running:
         try:
@@ -173,20 +202,22 @@ def input_thread():
             _running = False
             break
 
-# ========== FETCH ==========
-def fetch_state(conn: sqlite3.Connection) -> Tuple:
+# ========== DB FETCH ==========
+def fetch_state(conn: sqlite3.Connection) -> Tuple[int,int,float,float,int,int]:
     cursor = conn.cursor()
     cursor.execute("""
         SELECT iteration, cell_count, avg_resonance, avg_age, births, deaths
         FROM field_state ORDER BY id DESC LIMIT 1
     """)
     row = cursor.fetchone()
-    return row if row else (0, 0, 0.0, 0.0, 0, 0)
+    if not row:
+        return (0,0,0.0,0.0,0,0)
+    return row
 
-def fetch_cells(conn: sqlite3.Connection, limit: int = 30) -> List[Tuple]:
+def fetch_cells(conn: sqlite3.Connection, limit: int = 60) -> List[Tuple[str,int,float,float]]:
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT cell_id, age, resonance_score, fitness
+        SELECT cell_id, age, COALESCE(resonance_score,0.0), COALESCE(fitness,0.0)
         FROM field_cells WHERE status='alive'
         ORDER BY id DESC LIMIT ?
     """, (limit,))
@@ -200,188 +231,281 @@ def fetch_history(conn: sqlite3.Connection, limit: int = 15) -> List[Tuple]:
     """, (limit,))
     return list(reversed(cursor.fetchall()))
 
-# ========== VISUAL ==========
-def get_color_symbol(cell_id: str, fitness: float) -> Tuple[str, str]:
-    """Get color and symbol based on cell source and fitness."""
-    # Check source
-    for word in _user_words:
-        if word in cell_id:
-            return COLORS["user"], STATUS["user"]
-    
-    for word in _repo_words:
-        if word in cell_id:
-            return COLORS["repo"], STATUS["repo"]
-    
-    # Regular fitness-based coloring
-    if fitness > 0.7:
+# ========== COLOR/SYMBOL PICK ==========
+def is_user_cell(cell_id: str) -> bool:
+    return cell_id.startswith("user_") or any(w in cell_id for w in _user_words)
+
+def is_repo_cell(cell_id: str) -> bool:
+    return cell_id.startswith("repo_") or any(w in cell_id for w in _repo_words)
+
+def color_and_symbol(cell_id: str, fitness: float) -> Tuple[str, str]:
+    # source color/symbol overrides organic
+    if is_user_cell(cell_id):
+        return COLORS["user"], STATUS["user"]
+    if is_repo_cell(cell_id):
+        return COLORS["repo"], STATUS["repo"]
+    # organic by fitness
+    if fitness > 0.75:
         return COLORS["high"], STATUS["high"]
-    elif fitness > 0.5:
-        return COLORS["medium"], STATUS["medium"]
-    elif fitness > 0.3:
+    elif fitness > 0.55:
+        return COLORS["medium"], STATUS["med"]
+    elif fitness > 0.35:
         return COLORS["low"], STATUS["low"]
+    elif fitness > 0.15:
+        return COLORS["low"], STATUS["min"]
     else:
         return COLORS["dead"], STATUS["dead"]
 
-def render_sparkline(history: List[Tuple]):
-    """ASCII sparkline for population."""
+# ========== GRID UTILS ==========
+def hsh(s: str, mod: int) -> int:
+    return int.from_bytes(blake2b(s.encode("utf-8"), digest_size=8).digest(), "little") % max(1,mod)
+
+def base_position(cell_id: str, w: int, h: int) -> Tuple[int,int]:
+    # deterministic base idx
+    return hsh(cell_id+"_x", w), hsh(cell_id+"_y", h)
+
+def drift_offset(cell_id: str, t: float, resonance: float) -> Tuple[int,int]:
+    """Small smooth drift using sin/cos; amplitude tied to resonance."""
+    if not ENABLE_DRIFT:
+        return (0,0)
+    r = max(0.0, min(1.0, resonance))
+    amp = 1.0 + 2.0*r  # 1..3 cells
+    # different frequencies per cell
+    kx = 0.6 + 0.5*(hsh(cell_id+"_kx", 100)/100.0)
+    ky = 0.6 + 0.5*(hsh(cell_id+"_ky", 100)/100.0)
+    dx = int(round(math.sin(t*kx + hsh(cell_id+"_px", 1000)/90.0)*amp))
+    dy = int(round(math.cos(t*ky + hsh(cell_id+"_py", 1000)/110.0)*amp))
+    return (dx, dy)
+
+def place_cells_on_grid(cells: List[Tuple[str,int,float,float]], w: int, h: int, t: float) -> List[List[str]]:
+    """
+    Returns 2D char array representing the grid.
+    Conflict resolution priority: user > repo > organic (by symbol order above).
+    """
+    # empty grid
+    grid = [[" " for _ in range(w)] for _ in range(h)]
+    # a parallel grid to track priority score
+    prio = [[-1 for _ in range(w)] for _ in range(h)]
+
+    def src_priority(cell_id: str) -> int:
+        # higher number == higher priority
+        if is_user_cell(cell_id): return 3
+        if is_repo_cell(cell_id): return 2
+        return 1
+
+    for (cell_id, age, resonance, fitness) in cells:
+        x0, y0 = base_position(cell_id, w, h)
+        dx, dy = drift_offset(cell_id, t, resonance)
+        x = max(0, min(w-1, x0 + dx))
+        y = max(0, min(h-1, y0 + dy))
+
+        col, sym = color_and_symbol(cell_id, fitness)
+        # breathing shade swap for organic only
+        if ENABLE_BREATH and not (is_user_cell(cell_id) or is_repo_cell(cell_id)):
+            # use resonance to pick symbol intensity + breathing phase
+            phase = _breath_phase
+            shade = math.sin(phase*2*math.pi) * 0.5 + 0.5  # 0..1
+            # blended thresholding
+            if fitness > 0.75 and shade > 0.66:
+                sym = STATUS["high"]
+            elif fitness > 0.55 and shade > 0.33:
+                sym = STATUS["med"]
+            elif fitness > 0.35:
+                sym = STATUS["low"]
+            else:
+                sym = STATUS["min"]
+
+        p = src_priority(cell_id)
+        if p >= prio[y][x]:
+            prio[y][x] = p
+            grid[y][x] = f"{col}{sym}{RESET}" if ENABLE_COLOR else sym
+
+    return grid
+
+# ========== SPARKLINE ==========
+def render_sparkline(history: List[Tuple[int,int,float]]) -> str:
     if len(history) < 2:
-        return
-    
+        return ""
     populations = [h[1] for h in history]
     max_pop = max(populations) if populations else 1
-    
     chars = "▁▂▃▄▅▆▇█"
-    sparkline = ""
+    out = []
     for pop in populations:
-        index = int((pop / max_pop) * (len(chars) - 1)) if max_pop > 0 else 0
-        sparkline += chars[index]
-    
-    print(f"Population History: {COLORS['medium']}{sparkline}{RESET}")
+        idx = int((pop / max_pop) * (len(chars) - 1)) if max_pop > 0 else 0
+        out.append(chars[idx])
+    return "".join(out)
 
-def render_field(conn: sqlite3.Connection, cells: List[Tuple], iteration: int, 
-                metrics: Tuple, injected: List = None):
-    """Render the field state."""
+# ========== RENDER ==========
+def bell(n=1):
+    if not ENABLE_SOUND: 
+        return
+    sys.stdout.write('\a'*n)
+    sys.stdout.flush()
+
+def draw_frame(conn: sqlite3.Connection,
+               cells: List[Tuple[str,int,float,float]],
+               iteration: int,
+               metrics: Tuple[int,float,float,int,int],
+               injected: List[Tuple[str,str,float,str]]|None,
+               history: List[Tuple[int,int,float]]):
+    """Full UI frame with grid, metrics and lists."""
     global _last_births, _last_deaths
-    
+
     os.system("clear" if os.name != "nt" else "cls")
+
     cell_count, avg_resonance, avg_age, births, deaths = metrics
 
-    # Sound alerts
+    # sound on change
     if births > _last_births:
-        sys.stdout.write('\a')
+        bell(1)
     if deaths > _last_deaths and cell_count > 0:
-        sys.stdout.write('\a\a')
+        bell(2)
     if cell_count == 0:
-        sys.stdout.write('\a\a\a')
-    
-    _last_births = births
-    _last_deaths = deaths
+        bell(3)
+    _last_births, _last_deaths = births, deaths
 
-    # Banner
-    print(f"{BOLD}{COLORS['banner']}")
-    print("╔" + "═" * 62 + "╗")
-    print("║" + "⚡ ASYNC FIELD FOREVER (HYBRID) ⚡".center(62) + "║")
-    print("╚" + "═" * 62 + "╝" + RESET)
+    # ===== Banner
+    print(f"{BOLD}{COLORS['banner']}╔" + "═"*76 + f"╗{RESET}")
+    print(f"{BOLD}{COLORS['banner']}║" + "⚡ ASYNC FIELD FOREVER — HYBRID FULL GRID v6 ⚡".center(76) + f"║{RESET}")
+    print(f"{BOLD}{COLORS['banner']}╚" + "═"*76 + f"╝{RESET}")
 
-    print(f"Iteration: {iteration} | Population: {cell_count}")
-    print(f"Avg Resonance: {avg_resonance:.3f} | Avg Age: {avg_age:.1f}")
+    # ===== Metrics header
+    print(f"Iteration: {iteration} | Population: {cell_count} | Avg Resonance: {avg_resonance:.3f} | Avg Age: {avg_age:.1f}")
     print(f"Births: {births} | Deaths: {deaths}")
-    
-    # Show injections
+
+    # ===== Resonance pulse bar
+    pw = int(max(0, min(1, avg_resonance))*40)
+    pulse_bar = COLORS["high"] + "█"*pw + RESET + "░"*(40-pw)
+    print(f"\nResonance Pulse: {pulse_bar}")
+
+    # ===== Sparkline
+    spark = render_sparkline(history)
+    if spark:
+        print(f"Population History: {COLORS['medium']}{spark}{RESET}")
+
+    # ===== Injections summary
     if injected:
-        user_inj = [i for i in injected if i[3] == "user"]
-        repo_inj = [i for i in injected if i[3] == "repo"]
-        
+        user_inj = [i for i in injected if i[3]=="user"]
+        repo_inj = [i for i in injected if i[3]=="repo"]
         if user_inj:
             print(f"\n{COLORS['user']}💬 You said:{RESET}")
-            for word, action, fitness, _ in user_inj:
-                symbol = "★" if action == "BORN" else "↑"
-                print(f"  {symbol} '{word}' → {action} (fitness: {fitness:.2f})")
-        
+            for w, act, fit, _ in user_inj:
+                sym = "★" if act=="BORN" else "↑"
+                print(f"  {sym} '{w}' → {act} (fitness: {fit:.2f})")
         if repo_inj:
             print(f"\n{COLORS['repo']}📁 Repo changed:{RESET}")
-            for word, action, fitness, _ in repo_inj:
-                symbol = "◆" if action == "BORN" else "↑"
-                print(f"  {symbol} '{word}' → {action} (fitness: {fitness:.2f})")
-    
-    # Resonance pulse
-    pulse_width = int(avg_resonance * 40)
-    bar = COLORS["high"] + "█" * pulse_width + RESET + "░" * (40 - pulse_width)
-    print(f"\nResonance Pulse: {bar}")
-    
-    # Sparkline
-    history = fetch_history(conn)
-    render_sparkline(history)
-    
-    # Cell list
-    print("\n" + "─" * 70)
+            for w, act, fit, _ in repo_inj:
+                sym = "◆" if act=="BORN" else "↑"
+                print(f"  {sym} '{w}' → {act} (fitness: {fit:.2f})")
+
+    # ===== GRID (life in semantic space)
+    # update breathing phase bound to avg_resonance for tempo
+    # (higher resonance -> faster breathing)
+    tempo = 0.5 + avg_resonance*1.5  # 0.5..2.0 cycles per second
+    # _breath_phase updated in the animation loop; here we just render
+
+    grid = place_cells_on_grid(cells, GRID_W, GRID_H, time.time()*0.6)
+
+    print("\n" + (" " * GRID_PADDING_LEFT) + DIM + "— semantic life grid —" + RESET)
+    for row in grid:
+        line = "".join(row)
+        print((" " * GRID_PADDING_LEFT) + line)
+
+    # ===== List (top cells)
+    print("\n" + "─"*76)
     if not cells:
         print(f"{COLORS['dead']}Field is empty. Type or commit to bring it alive!{RESET}\n")
     else:
         print(f"{'SRC':<5} {'WORD':<20} {'FITNESS':<8} {'RESONANCE':<10} {'AGE':<5}")
-        print("─" * 70)
-        
-        for i, cell in enumerate(cells[:20]):
-            cell_id, age, resonance, fitness = cell
-            color, symbol = get_color_symbol(cell_id, fitness)
-            
-            # Extract word from cell_id
-            if "user_" in cell_id or "repo_" in cell_id:
+        print("─"*76)
+        for i, (cell_id, age, resonance, fitness) in enumerate(cells[:CELL_LIST_LIMIT]):
+            col, sym = color_and_symbol(cell_id, fitness)
+            # extract word
+            word = cell_id
+            if cell_id.startswith("user_") or cell_id.startswith("repo_"):
                 parts = cell_id.split("_")
-                word = parts[1] if len(parts) > 1 else cell_id[:15]
-            else:
-                word = cell_id[:15]
-            
-            pulse = "*" if resonance > 0.9 else " "
-            print(f"{color}{symbol}{RESET}    {word:<20} {fitness:>6.3f}   {resonance:>6.3f}     {age:<5}{pulse}")
-        
-        if len(cells) > 20:
-            print(f"... and {len(cells) - 20} more cells")
-    
-    # Footer
-    print("\n" + "─" * 70)
+                if len(parts) > 1:
+                    word = parts[1]
+            word = (word[:20] + "…") if len(word) > 20 else word
+            src = "YOU" if is_user_cell(cell_id) else ("REPO" if is_repo_cell(cell_id) else "ORG")
+            print(f"{col}{sym}{RESET}  {src:<4} {word:<20} {fitness:>6.3f}   {resonance:>6.3f}     {age:<5}")
+
+    # ===== Footer / Legend & Prompt
+    print("\n" + "─"*76)
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"\n{COLORS['user']}★ = Your words  {COLORS['repo']}◆ = Repo changes  "
-          f"{COLORS['high']}█ = Organic{RESET}")
-    print(f"\n{COLORS['banner']}Type to inject words (or Ctrl+C to exit):{RESET}")
+    print(f"\n{COLORS['user']}★=Your words  {COLORS['repo']}◆=Repo changes  {COLORS['high']}█/▓/▒/░=Organic{RESET}")
+    print(f"\n{COLORS['banner']}Type to inject words (Ctrl+C to exit):{RESET}")
     print("> ", end="", flush=True)
 
 # ========== MAIN LOOP ==========
 def main():
-    global _running, _input_buffer
-    
-    print(f"{BOLD}{COLORS['banner']}")
-    print("=" * 70)
-    print("  FIELD VISUALISER v5 - HYBRID MODE".center(70))
-    print("=" * 70)
-    print(RESET)
+    global _running, _input_buffer, _breath_phase
+
+    print(f"{BOLD}{COLORS['banner']}="*78 + RESET)
+    print(f"{BOLD}{COLORS['banner']}  FIELD VISUALISER v6 — FULL GRID HYBRID".center(78) + RESET)
+    print(f"{BOLD}{COLORS['banner']}="*78 + RESET)
     print(f"Database: {ACTIVE_DB}")
     print(f"Repo: {REPO_PATH}")
-    
-    # Init repo monitor
+
     repo_monitor = init_repo_monitor()
     if repo_monitor:
-        print(f"{COLORS['repo']}✓ Repo monitor ACTIVE - tracking changes!{RESET}")
+        print(f"{COLORS['repo']}✓ Repo monitor ACTIVE — tracking changes!{RESET}")
     else:
         print(f"{COLORS['dead']}✗ Repo monitor disabled{RESET}")
-    
+
     print(f"\n{COLORS['user']}💬 Type messages to inject YOUR words{RESET}")
     print(f"{COLORS['repo']}📁 Repo changes auto-injected every cycle{RESET}\n")
     print("Starting in 3 seconds...\n")
     time.sleep(3)
-    
+
     # Start input thread
-    input_t = threading.Thread(target=input_thread, daemon=True)
-    input_t.start()
-    
+    threading.Thread(target=input_thread, daemon=True).start()
+
     conn = sqlite3.connect(ACTIVE_DB)
+
+    # time aggregation for UI refresh vs breathing
+    last_refresh = 0.0
     try:
         while _running:
-            injected = []
-            
-            # Process user input
-            if _input_buffer:
-                user_text = _input_buffer.pop(0)
-                words = extract_words(user_text)
-                if words:
-                    user_inj = inject_words_into_field(conn, words, source="user")
-                    injected.extend(user_inj)
-            
-            # Process repo changes (every cycle)
-            if repo_monitor:
-                repo_words = fetch_repo_changes(repo_monitor)
-                if repo_words:
-                    repo_inj = inject_words_into_field(conn, repo_words, source="repo")
-                    injected.extend(repo_inj)
-            
-            # Fetch and render
-            iteration, cell_count, avg_resonance, avg_age, births, deaths = fetch_state(conn)
-            cells = fetch_cells(conn, limit=30)
-            render_field(conn, cells, iteration, 
-                        (cell_count, avg_resonance, avg_age, births, deaths), 
-                        injected if injected else None)
-            
-            time.sleep(5)
+            now = time.time()
+            # breathing tempo; we approximate with a fixed delta time tick
+            # progress phase (wrap 0..1)
+            _breath_phase = (_breath_phase + FRAME_DT) % 1.0
+
+            # Every UI_REFRESH seconds: refetch state, render full frame
+            if now - last_refresh >= UI_REFRESH:
+                injected: List[Tuple[str,str,float,str]] = []
+
+                # process user input
+                if _input_buffer:
+                    user_text = _input_buffer.pop(0)
+                    words = extract_words(user_text)
+                    if words:
+                        inj = inject_words_into_field(conn, words, source="user")
+                        injected.extend(inj)
+
+                # process repo changes
+                if repo_monitor:
+                    repo_words = fetch_repo_changes(repo_monitor)
+                    if repo_words:
+                        inj = inject_words_into_field(conn, repo_words, source="repo")
+                        injected.extend(inj)
+
+                # fetch & render
+                iteration, cell_count, avg_res, avg_age, births, deaths = fetch_state(conn)
+                cells = fetch_cells(conn, limit=GRID_W*GRID_H)  # plenty
+                hist = fetch_history(conn, limit=20)
+
+                draw_frame(conn, cells, iteration,
+                           (cell_count, avg_res, avg_age, births, deaths),
+                           injected if injected else None,
+                           hist)
+
+                last_refresh = now
+
+            # inner animation tick — just sleep short for smooth breathing
+            time.sleep(FRAME_DT)
+
     except KeyboardInterrupt:
         _running = False
         print(f"\n\n{COLORS['banner']}Field visualisation stopped. 🧬⚡{RESET}\n")
@@ -390,4 +514,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
