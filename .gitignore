@@ -61,3 +61,11 @@ apk/*/.gradle/
 apk/*/local.properties
 apk/*/gradle/
 
+# APK working directory (NEVER commit - full forks too large)
+apk_work/
+
+# Gradle artifacts
+.gradle/
+*.iml
+local.properties
+
