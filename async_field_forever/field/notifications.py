@@ -8,6 +8,16 @@ import os
 import subprocess
 from typing import List
 from datetime import datetime
+import time
+
+# Rate limiting for emergency notifications (global state)
+_last_emergency_notification = {
+    "extinction": 0,
+    "critical": 0,
+    "high_population": 0,
+    "stagnation": 0
+}
+_EMERGENCY_COOLDOWN = 3600  # 1 hour between same emergency type notifications
 
 
 def send_termux_notification(title: str, content: str, priority: str = "default"):
@@ -42,8 +52,8 @@ def send_field_metrics(iteration: int, cell_count: int, avg_resonance: float,
     """
     Send Field growth report.
 
-    Only sends if force=True (emergency) or scheduled time (every 6 hours).
-    Regular updates: 4x per day. Emergency updates: always.
+    Only sends if force=True (scheduled) or emergency with rate limiting.
+    Regular updates: 4x per day. Emergency updates: max 1x per hour per type.
 
     Args:
         iteration: Current iteration number
@@ -52,38 +62,55 @@ def send_field_metrics(iteration: int, cell_count: int, avg_resonance: float,
         avg_age: Average cell age
         births: Births this interval
         deaths: Deaths this interval
-        force: If True, send regardless of schedule (emergency)
+        force: If True, send regardless of schedule (scheduled update)
     """
-    # Emergency conditions (always notify)
-    is_emergency = (
-        cell_count == 0 or           # Extinction
-        cell_count > 90 or           # Near population cap
-        cell_count < 3 or            # Critical population
-        (cell_count > 0 and avg_resonance > 0.95)  # Stagnation
-    )
+    global _last_emergency_notification
 
-    # Only send if forced, emergency, or scheduled interval
-    if not (force or is_emergency):
-        return
+    current_time = time.time()
 
-    # Determine notification priority
+    # Determine emergency type and check cooldown
+    emergency_type = None
     if cell_count == 0:
+        emergency_type = "extinction"
         emoji = "💀"
         title = "🚨 Field EXTINCTION"
         priority = "high"
     elif cell_count < 3:
+        emergency_type = "critical"
         emoji = "⚠️"
         title = "⚠️ Field Critical"
         priority = "high"
     elif cell_count > 90:
+        emergency_type = "high_population"
         emoji = "📈"
         title = "⚠️ Field Population High"
         priority = "default"
+    elif cell_count > 0 and avg_resonance > 0.95:
+        emergency_type = "stagnation"
+        emoji = "🟡"
+        title = "⚠️ Field Stagnation"
+        priority = "default"
     else:
+        # Not an emergency - only send if forced (scheduled)
+        if not force:
+            return
         emoji = "🌱"
         title = "Field Update"
         priority = "default"
 
+    # If emergency: check rate limit (1 hour cooldown per type)
+    if emergency_type and not force:
+        last_notification_time = _last_emergency_notification.get(emergency_type, 0)
+        time_since_last = current_time - last_notification_time
+
+        if time_since_last < _EMERGENCY_COOLDOWN:
+            # Still in cooldown - don't spam
+            return
+
+        # Update last notification time
+        _last_emergency_notification[emergency_type] = current_time
+
+    # Send notification
     content = f"""{emoji} Field Growth Report
 
 Iteration: {iteration}
