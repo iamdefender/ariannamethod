@@ -5,12 +5,12 @@ Async Field Forever - Pure presence, no utility.
 """
 
 # Population
-INITIAL_POPULATION = 10           # Starting cell count
+INITIAL_POPULATION = 25           # Starting cell count (was 10 - more genetic diversity)
 MAX_POPULATION = 100              # Population cap (prevent explosion)
 
-# Game of Life thresholds  
-DEATH_THRESHOLD = 0.55            # Die if fitness < this (with penalties, creates ~20-30% death rate)
-REPRODUCTION_THRESHOLD = 0.75     # Reproduce if fitness > this (only fit cells breed)
+# Game of Life thresholds (PERPLEXITY AI FIX - extinction recovery)
+DEATH_THRESHOLD = 0.3             # Die if fitness < this (was 0.55 - give weaker cells a chance)
+REPRODUCTION_THRESHOLD = 0.65     # Reproduce if fitness > this (was 0.75 - easier to reproduce)
 
 # Evolution
 MUTATION_RATE = 0.1               # Architecture mutation rate (10%)
