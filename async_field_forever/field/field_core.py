@@ -32,6 +32,15 @@ if not os.path.exists(os.path.dirname(os.path.expanduser(DB_PATH)) or "."):
     ACTIVE_DB_PATH = DB_PATH_LOCAL
 else:
     ACTIVE_DB_PATH = DB_PATH
+
+# Try to import RepoMonitor for context diversity
+try:
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+    from arianna_core_utils.repo_monitor import RepoMonitor
+    REPO_MONITOR_AVAILABLE = True
+except ImportError:
+    REPO_MONITOR_AVAILABLE = False
 from transformer_cell import TransformerCell
 from resonance_bridge import ResonanceBridge
 from notifications import (
@@ -58,6 +67,13 @@ class Field:
         self.resonance_bridge = ResonanceBridge(ACTIVE_DB_PATH)
         self.embedding_engine = EmbeddingEngine()
         self.meta_learner = MetaLearner()
+        
+        # RepoMonitor integration for context diversity
+        if REPO_MONITOR_AVAILABLE:
+            self.repo_monitor = RepoMonitor()
+            log_metrics("RepoMonitor initialized - Field will feel repository changes", "INFO")
+        else:
+            self.repo_monitor = None
         
         # AMLK integration (dynamic kernel)
         if AMLK_AVAILABLE:
@@ -89,6 +105,17 @@ class Field:
         
         # Fetch context from resonance.sqlite3
         context = self.resonance_bridge.fetch_recent_context(CONTEXT_WINDOW_SIZE)
+        
+        # Add repository changes if RepoMonitor is available
+        if self.repo_monitor:
+            try:
+                repo_changes = self.repo_monitor.detect_changes()
+                if repo_changes:
+                    repo_context = " ".join(repo_changes.keys())
+                    context = f"{context} {repo_context}"
+                    log_metrics(f"RepoMonitor: {len(repo_changes)} files changed", "INFO")
+            except Exception as e:
+                log_metrics(f"RepoMonitor error: {e}", "WARN")
         
         # Fit embedding engine on context
         # Split into sentences for TF-IDF
@@ -179,6 +206,28 @@ class Field:
         for cell in self.cells:
             if cell.alive:
                 self.update_cell_metrics(cell)
+        
+        # 1.5. Check for repository changes and inject new cells
+        if self.repo_monitor and self.iteration % 10 == 0:  # Check every 10 iterations
+            try:
+                repo_changes = self.repo_monitor.detect_changes()
+                if repo_changes:
+                    for filepath, change_type in repo_changes.items():
+                        # Create repo cell from file change
+                        repo_cell = TransformerCell(
+                            context=f"repo_{filepath}_{change_type}",
+                            neighbors=[],
+                            architecture=None
+                        )
+                        repo_cell.resonance_score = 0.7  # High initial resonance
+                        repo_cell.entropy = 0.5
+                        repo_cell.perplexity = 1.5
+                        self.cells.append(repo_cell)
+                        self.total_births += 1
+                        self.births_this_interval += 1
+                        log_metrics(f"📁 Repo cell born: {filepath} ({change_type})", "INFO")
+            except Exception as e:
+                log_metrics(f"RepoMonitor error in tick: {e}", "WARN")
         
         # 2. Tick all cells (life/death/reproduction)
         new_cells = []
