@@ -208,7 +208,7 @@ class Field:
                 self.update_cell_metrics(cell)
         
         # 1.5. Check for repository changes and inject new cells
-        if self.repo_monitor and self.iteration % 10 == 0:  # Check every 10 iterations
+        if self.repo_monitor and self.iteration % 3 == 0:  # Check every 3 iterations
             try:
                 repo_changes = self.repo_monitor.detect_changes()
                 if repo_changes:
