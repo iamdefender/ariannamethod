@@ -11,7 +11,7 @@ from hashlib import blake2b
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-# ---------------- CONFIG ----------------
+# ---------------- CONFIG ---------------- 
 DB_PATH = "/data/data/com.termux/files/home/ariannamethod/resonance.sqlite3"
 DB_PATH_LOCAL = "./resonance.sqlite3"
 ACTIVE_DB = DB_PATH if os.path.exists(os.path.expanduser(DB_PATH)) else DB_PATH_LOCAL
