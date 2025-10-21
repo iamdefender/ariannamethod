@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FIELD VISUALISER v7.1 — Adaptive Fixed (Termux / macOS / Linux)
-
-FIXED IN v7.1:
-- Banner box-drawing alignment
-- Wider banner (50-80 chars, 90% of terminal)
-- Proper emoji/Unicode handling
-- Termux-optimized layout
+FIELD VISUALISER v7.2 — Centered Grid + Adaptive Layout (drop-in for v7.1)
+- Keeps repo/injection logic intact.
+- Fixes banner alignment and centers the ascii grid within banner width.
+- Termux-friendly and desktop-friendly.
 """
 
 import time
@@ -20,7 +17,7 @@ import re
 import math
 import shutil
 from datetime import datetime
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 from pathlib import Path
 from hashlib import blake2b
 
@@ -31,19 +28,32 @@ def get_terminal_config():
         term_w, term_h = shutil.get_terminal_size((80, 24))
     except:
         term_w, term_h = 80, 24
-    
+
     is_mobile = term_w < 70
-    
+
+    # banner width: clamp between 50 and min(term_w-2, 90)
+    bw = max(50, min(int(term_w * 0.9), term_w - 2))
+    grid_w = 36 if is_mobile else 48
+    grid_h = 12 if is_mobile else 18
+    pulse_bar = 24 if is_mobile else 40
+    cell_list_limit = 2 if is_mobile else 4
+    grid_padding_left = 1 if is_mobile else 2
+
+    # If terminal too narrow, shrink grid to fit
+    max_grid_w = max(8, bw - 10)
+    if grid_w > max_grid_w:
+        grid_w = max_grid_w
+
     return {
         "term_w": term_w,
         "term_h": term_h,
         "is_mobile": is_mobile,
-        "banner_width": max(50, min(80, int(term_w * 0.9))),  # 50 min, 90% width
-        "grid_w": 36 if is_mobile else 48,
-        "grid_h": 12 if is_mobile else 18,
-        "pulse_bar_w": 24 if is_mobile else 40,
-        "cell_list_limit": 2 if is_mobile else 4,
-        "grid_padding_left": 1 if is_mobile else 2,
+        "banner_width": bw,
+        "grid_w": grid_w,
+        "grid_h": grid_h,
+        "pulse_bar_w": pulse_bar,
+        "cell_list_limit": cell_list_limit,
+        "grid_padding_left": grid_padding_left,
     }
 
 CONFIG = get_terminal_config()
@@ -293,7 +303,7 @@ def place_cells_on_grid(cells: List[Tuple[str,int,float,float]], w: int, h: int,
         y = max(0, min(h-1, y0 + dy))
 
         col, sym = color_and_symbol(cell_id, fitness)
-        
+
         if ENABLE_BREATH and not (is_user_cell(cell_id) or is_repo_cell(cell_id)):
             phase = _breath_phase
             shade = math.sin(phase*2*math.pi) * 0.5 + 0.5
@@ -326,20 +336,28 @@ def render_sparkline(history: List[Tuple[int,int,float]]) -> str:
         out.append(chars[idx])
     return "".join(out)
 
-# ========== RENDER ==========
+# ========== RENDER HELPERS ==========
 def bell(n=1):
-    if not ENABLE_SOUND: 
+    if not ENABLE_SOUND:
         return
     sys.stdout.write('\a'*n)
     sys.stdout.flush()
 
+def center_text(text: str, width: int) -> str:
+    """Return text centered into width (trim if too long)."""
+    if len(text) >= width:
+        return text[:width]
+    left = (width - len(text)) // 2
+    return " " * left + text
+
+# ========== RENDER ==========
 def draw_frame(conn: sqlite3.Connection,
                cells: List[Tuple[str,int,float,float]],
                iteration: int,
                metrics: Tuple[int,float,float,int,int],
                injected: List[Tuple[str,str,float,str]]|None,
                history: List[Tuple[int,int,float]]):
-    global _last_births, _last_deaths
+    global _last_births, _last_deaths, _breath_phase
 
     os.system("clear" if os.name != "nt" else "cls")
 
@@ -353,49 +371,66 @@ def draw_frame(conn: sqlite3.Connection,
         bell(3)
     _last_births, _last_deaths = births, deaths
 
-    # FIXED: Banner with proper width calculation
-    banner_inner = BANNER_WIDTH - 2  # Account for ║ ║
-    print(f"{BOLD}{COLORS['banner']}╔" + "═"*banner_inner + f"╗{RESET}")
-    print(f"{BOLD}{COLORS['banner']}║" + " FIELD v7.1 ".center(banner_inner) + f"║{RESET}")
-    print(f"{BOLD}{COLORS['banner']}╚" + "═"*banner_inner + f"╝{RESET}")
+    # Banner
+    inner = BANNER_WIDTH - 2
+    print(f"{BOLD}{COLORS['banner']}╔" + "═"*inner + f"╗{RESET}")
+    print(f"{BOLD}{COLORS['banner']}║" + center_text("⚡ ASYNC FIELD FOREVER (HYBRID) ⚡", inner) + f"║{RESET}")
+    print(f"{BOLD}{COLORS['banner']}╚" + "═"*inner + f"╝{RESET}")
 
-    # Readable metrics
-    print(f"Iter: {iteration} | Pop: {cell_count} | Res: {avg_resonance:.2f}")
-    print(f"Age: {avg_age:.1f} | Births: {births} | Deaths: {deaths}")
+    # Metrics line centered
+    metrics_line = f"Iter: {iteration}  |  Pop: {cell_count}  |  Res: {avg_resonance:.2f}  |  Age: {avg_age:.1f}"
+    print(center_text(metrics_line, BANNER_WIDTH))
 
-    # Pulse bar
-    pw = int(max(0, min(1, avg_resonance))*PULSE_BAR_W)
+    births_line = f"Births: {births}  |  Deaths: {deaths}"
+    print(center_text(births_line, BANNER_WIDTH))
+
+    # Pulse bar centered
+    pw = int(max(0, min(1, avg_resonance)) * PULSE_BAR_W)
     pulse_bar = COLORS["high"] + "█"*pw + RESET + "░"*(PULSE_BAR_W-pw)
-    print(f"\nPulse: {pulse_bar}")
+    pulse_text = f"Pulse: {pulse_bar}"
+    print("\n" + center_text(pulse_text, BANNER_WIDTH))
 
     spark = render_sparkline(history)
     if spark:
-        print(f"Hist: {COLORS['medium']}{spark}{RESET}")
+        spark_text = f"Hist: {COLORS['medium']}{spark}{RESET}"
+        print(center_text(spark_text, BANNER_WIDTH))
 
+    # Show injections compactly (centered block)
+    inj_lines = []
     if injected:
         user_inj = [i for i in injected if i[3]=="user"]
         repo_inj = [i for i in injected if i[3]=="repo"]
         if user_inj:
-            print(f"\n{COLORS['user']}★ You:{RESET}")
-            for w, act, fit, _ in user_inj[:2]:  # Max 2
-                sym = "★" if act=="BORN" else "↑"
-                print(f"  {sym} {w} ({fit:.2f})")
+            inj_lines.append(f"{COLORS['user']}You:{RESET} " + ", ".join([f"{w}({f:.2f})" for w,_,f,_ in user_inj[:4]]))
         if repo_inj:
-            print(f"\n{COLORS['repo']}◆ Repo:{RESET}")
-            for w, act, fit, _ in repo_inj[:2]:  # Max 2
-                sym = "◆" if act=="BORN" else "↑"
-                print(f"  {sym} {w} ({fit:.2f})")
+            inj_lines.append(f"{COLORS['repo']}Repo:{RESET} " + ", ".join([f"{w}({f:.2f})" for w,_,f,_ in repo_inj[:4]]))
+    for l in inj_lines:
+        print(center_text(l, BANNER_WIDTH))
 
+    # Grid: center it horizontally inside banner width
     grid = place_cells_on_grid(cells, GRID_W, GRID_H, time.time()*0.6)
-    print("\n" + (" " * GRID_PADDING_LEFT) + DIM + "— grid —" + RESET)
-    for row in grid:
-        line = "".join(row)
-        print((" " * GRID_PADDING_LEFT) + line)
+    grid_lines = ["".join(row) for row in grid]
 
-    print("\n" + "─"*BANNER_WIDTH)
+    # compute left padding to center grid in banner area
+    # remove ANSI length from measure by measuring raw cells (each cell is 1 char visually)
+    # approximate printed width of a row as GRID_W
+    total_width = BANNER_WIDTH
+    grid_width = GRID_W
+    left_pad = max(0, (total_width - grid_width) // 2)
+
+    print("\n" + " " * left_pad + DIM + "— grid —" + RESET)
+    for row in grid_lines:
+        # row already contains colored symbols; but length visible ~ GRID_W
+        print(" " * left_pad + row)
+
+    # Footer and cell list (left-aligned under grid but centered block overall)
+    print("\n" + "─" * BANNER_WIDTH)
+
     if not cells:
-        print(f"{COLORS['dead']}Empty. Type!{RESET}\n")
+        print(center_text(f"{COLORS['dead']}Field is empty. Type or commit to create life!{RESET}", BANNER_WIDTH))
     else:
+        # Print up to CELL_LIST_LIMIT entries centered
+        cell_entries = []
         for i, (cell_id, age, resonance, fitness) in enumerate(cells[:CELL_LIST_LIMIT]):
             col, sym = color_and_symbol(cell_id, fitness)
             word = cell_id
@@ -403,33 +438,44 @@ def draw_frame(conn: sqlite3.Connection,
                 parts = cell_id.split("_")
                 if len(parts) > 1:
                     word = parts[1]
-            word = (word[:12] + "…") if len(word) > 12 else word
+            display_word = (word[:12] + "…") if len(word) > 12 else word
             src = "U" if is_user_cell(cell_id) else ("R" if is_repo_cell(cell_id) else "O")
-            print(f"{col}{sym}{RESET} {src} {word:<12} {fitness:.2f}")
+            entry = f"{col}{sym}{RESET} {src} {display_word:<12} {fitness:.2f}  r:{resonance:.2f} age:{age}"
+            cell_entries.append(entry)
 
-    print("\n" + "─"*BANNER_WIDTH)
-    print(f"{COLORS['user']}★{COLORS['repo']}◆{COLORS['high']}█{RESET} | {datetime.now().strftime('%H:%M:%S')}")
+        # join entries into centered block (one per line)
+        for e in cell_entries:
+            print(center_text(e, BANNER_WIDTH))
+
+    # bottom legend + prompt
+    print("\n" + "─" * BANNER_WIDTH)
+    legend = f"{COLORS['user']}★{RESET}Your words  {COLORS['repo']}◆{RESET}Repo changes  {COLORS['high']}█{RESET}Organic"
+    print(center_text(legend, BANNER_WIDTH))
+    time_str = datetime.now().strftime('%H:%M:%S')
+    print(center_text(time_str, BANNER_WIDTH))
     print(f"\n{COLORS['banner']}>{RESET} ", end="", flush=True)
+
 
 # ========== MAIN LOOP ==========
 def main():
     global _running, _input_buffer, _breath_phase
 
-    print(f"{BOLD}{COLORS['banner']}="*BANNER_WIDTH + RESET)
-    print(f"{BOLD}{COLORS['banner']}  FIELD v7.1 — ADAPTIVE FIXED".center(BANNER_WIDTH) + RESET)
-    print(f"{BOLD}{COLORS['banner']}="*BANNER_WIDTH + RESET)
+    # Header
+    print(f"{BOLD}{COLORS['banner']}" + "=" * BANNER_WIDTH + RESET)
+    print(center_text("  FIELD v7.2 — CENTERED GRID", BANNER_WIDTH))
+    print(f"{BOLD}{COLORS['banner']}" + "=" * BANNER_WIDTH + RESET)
     print(f"Terminal: {CONFIG['term_w']}x{CONFIG['term_h']} ({'Mobile' if CONFIG['is_mobile'] else 'Desktop'})")
     print(f"Grid: {GRID_W}x{GRID_H} | Banner: {BANNER_WIDTH}")
 
     repo_monitor = init_repo_monitor()
     if repo_monitor:
-        print(f"{COLORS['repo']}✓ Repo monitor{RESET}")
+        print(f"{COLORS['repo']}✓ Repo monitor active{RESET}")
     else:
-        print(f"{COLORS['dead']}✗ No repo monitor{RESET}")
+        print(f"{COLORS['dead']}✗ Repo monitor disabled{RESET}")
 
     print(f"\n{COLORS['user']}Type to inject words{RESET}")
-    print("Starting in 3s...\n")
-    time.sleep(3)
+    print("Starting in 1s...\n")
+    time.sleep(1)
 
     threading.Thread(target=input_thread, daemon=True).start()
     conn = sqlite3.connect(ACTIVE_DB)
