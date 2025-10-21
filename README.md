@@ -58,7 +58,6 @@ ariannamethod/
 │   ├── hooks/                         # Daily audits + post-modification sentinels
 │   ├── tools/                         # Backup, snapshot, consilium responders, field monitor
 │   └── CONSILIUM_*.md                 # Live status reports + quickstarts for mission #5
-├── CLAUDE_COPILOT_MISSION.md          # Co-pilot prime directive + method imprint
 ├── CLAUDE_DEFENDER_MISSION.md         # Claude Defender genesis brief
 ├── CLAUDE_DEFENDER_MISSION_2.md       # Mission #2 — Arianna memory lattice expansion
 ├── CLAUDE_DEFENDER_MISSION_3_COMPLETE.md# Mission #3 completion log (Field genesis)
