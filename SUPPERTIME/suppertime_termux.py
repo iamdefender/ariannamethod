@@ -18,7 +18,7 @@ try:
         load_chapter_context_all, build_scene_prompt, parse_lines,
         CHAPTER_TITLES, HeroManager
     )
-    from bridge import guess_participants
+    from bridge_termux import guess_participants
     from config_termux import settings
 except ImportError as e:
     print(f"Error: {e}")
