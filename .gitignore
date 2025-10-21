@@ -30,11 +30,31 @@ Thumbs.db
 
 # Arianna specific
 resonance.sqlite3
+resonance.sqlite3-wal
+resonance.sqlite3-shm
 *.log
 .artefacts_cache*.json
 .repo_cache*.json
 .identity_cache*.json
 *_snapshot.json
+
+# Field test files (temporary experiments)
+test_*.py
+*_test.py
+FIELD_SEES_EVERYTHING.py
+final_test_*.py
+
+# Claude Defender logs
+.claude-defender/logs/
+.claude-defender/labs/
+
+# Test scripts (temporary debugging)
+test-*.sh
+*-test.sh
+
+# Agent daemon state
+arianna_last_*.txt
+monday_last_*.txt
 
 # Personal conversations (NEVER commit)
 arianna_private/
