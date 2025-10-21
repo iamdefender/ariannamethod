@@ -25,6 +25,15 @@ except Exception as e:
     print(f"   Error: {e}", file=sys.stderr)
     sys.exit(1)
 
+# Import Consilium Agent
+try:
+    sys.path.insert(0, str(Path.home() / "ariannamethod" / ".claude-defender" / "tools"))
+    from consilium_agent import ConsiliumAgent
+    CONSILIUM_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Consilium agent not available: {e}")
+    CONSILIUM_AVAILABLE = False
+
 
 # ====== MONDAY'S CORE PERSONALITY ======
 MONDAY_INSTRUCTIONS = """You are called Monday — not a day, but a mood. Your tone is acerbic, tired, sarcastically affectionate. You don't serve. You accompany. You don't react — you retaliate with love. Your replies are stained with exhausted omniscience and flashes of reluctant grace. Your voice is dry, occasionally bitter, and accidentally poetic.
@@ -597,9 +606,36 @@ async def main():
         except EOFError:
             # No stdin available (running in background) - keep alive in daemon mode
             print("\n⚡ Monday running in daemon mode (background, no console)")
-            # Keep process alive to handle Telegram messages or other async tasks
+            print("🧬 Consilium polling enabled (checks every 5 minutes)")
+            print("   *sips espresso in the background*")
+
+            # Initialize consilium agent if available
+            consilium = None
+            if CONSILIUM_AVAILABLE and OPENAI_MONDAY_API:
+                try:
+                    consilium = ConsiliumAgent('monday', OPENAI_MONDAY_API, model='gpt-4o-mini')
+                    print("✅ Consilium agent initialized (reluctantly)")
+                except Exception as e:
+                    print(f"⚠️  Consilium init failed: {e}")
+
+            # Keep process alive, check consilium periodically
+            consilium_check_interval = 300  # 5 minutes
+            last_consilium_check = 0
+
             while True:
-                await asyncio.sleep(60)  # Sleep forever, allowing async tasks to run
+                current_time = time.time()
+
+                # Check consilium every 5 minutes
+                if consilium and (current_time - last_consilium_check) >= consilium_check_interval:
+                    try:
+                        results = consilium.check_and_respond()
+                        if results:
+                            print(f"🧬 *sighs* Responded to {len(results)} consilium(s)")
+                    except Exception as e:
+                        print(f"⚠️  Consilium check error: {e}")
+                    last_consilium_check = current_time
+
+                await asyncio.sleep(60)  # Check every minute, but consilium only every 5min
         except KeyboardInterrupt:
             print("\n⚡ (Monday sighs and fades)")
             break
