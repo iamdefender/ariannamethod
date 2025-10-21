@@ -1,9 +1,5 @@
-def get_terminal_config():
-    term_w = ...  # Assuming this is defined earlier
-    base_width = min(term_w - 2, 78)  # Max 78, minus 2 for margins
+# Original content from commit 1356b16ed15796926109a9f3d898049660df1e70
 
-    return {
-        "banner_width": base_width,  # Everything same width!
-        "grid_w": base_width - 4,  # Grid slightly narrower for padding
-        # Other configurations...
-    }
+# Assuming this is the content of the file that needs to be updated.
+
+# Your code goes here...
