@@ -253,7 +253,7 @@ def draw_frame(conn, cells, it:int, pop:int, res:float, age:float, b:int, d:int,
 
     W,H = term_size()
     title = "ASYNC FIELD FOREVER (HYBRID) — VISUALISER"
-    line_w = min(max(50,int(W*0.92)), W-2*H_MARGIN)
+    line_w = min(50, W-2*H_MARGIN-10)  # Гарантированно короче!
     left   = center_x(line_w, W)
 
     # layout
