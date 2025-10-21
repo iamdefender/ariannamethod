@@ -49,8 +49,11 @@ GRID_PADDING_LEFT = 2
 FRAME_DT = 0.2    # inner animation step for breathing/drift
 UI_REFRESH = 5.0  # how often to refetch DB + re-render UI frame
 
-# Limit rows in lists
-CELL_LIST_LIMIT = 20
+# Limit rows in lists (short for mobile - keyboard blocks grid)
+CELL_LIST_LIMIT = 4
+
+# Banner width (optimized for mobile, 60 fits Termux better)
+BANNER_WIDTH = 60
 
 # ========== FLAGS ==========
 ENABLE_COLOR = True
@@ -365,13 +368,13 @@ def draw_frame(conn: sqlite3.Connection,
     _last_births, _last_deaths = births, deaths
 
     # ===== Banner
-    print(f"{BOLD}{COLORS['banner']}╔" + "═"*76 + f"╗{RESET}")
-    print(f"{BOLD}{COLORS['banner']}║" + "⚡ ASYNC FIELD FOREVER — HYBRID FULL GRID v6 ⚡".center(76) + f"║{RESET}")
-    print(f"{BOLD}{COLORS['banner']}╚" + "═"*76 + f"╝{RESET}")
+    print(f"{BOLD}{COLORS['banner']}╔" + "═"*BANNER_WIDTH + f"╗{RESET}")
+    print(f"{BOLD}{COLORS['banner']}║" + "⚡ ASYNC FIELD v6 ⚡".center(BANNER_WIDTH) + f"║{RESET}")
+    print(f"{BOLD}{COLORS['banner']}╚" + "═"*BANNER_WIDTH + f"╝{RESET}")
 
     # ===== Metrics header
-    print(f"Iteration: {iteration} | Population: {cell_count} | Avg Resonance: {avg_resonance:.3f} | Avg Age: {avg_age:.1f}")
-    print(f"Births: {births} | Deaths: {deaths}")
+    print(f"Iter: {iteration} | Pop: {cell_count}")
+    print(f"Res: {avg_resonance:.2f} | Age: {avg_age:.1f} | B: {births} D: {deaths}")
 
     # ===== Resonance pulse bar
     pw = int(max(0, min(1, avg_resonance))*40)
@@ -412,12 +415,12 @@ def draw_frame(conn: sqlite3.Connection,
         print((" " * GRID_PADDING_LEFT) + line)
 
     # ===== List (top cells)
-    print("\n" + "─"*76)
+    print("\n" + "─"*BANNER_WIDTH)
     if not cells:
-        print(f"{COLORS['dead']}Field is empty. Type or commit to bring it alive!{RESET}\n")
+        print(f"{COLORS['dead']}Field is empty. Type or commit!{RESET}\n")
     else:
-        print(f"{'SRC':<5} {'WORD':<20} {'FITNESS':<8} {'RESONANCE':<10} {'AGE':<5}")
-        print("─"*76)
+        print(f"{'S':<3} {'WORD':<16} {'FIT':<5} {'RES':<5} {'AGE':<4}")
+        print("─"*BANNER_WIDTH)
         for i, (cell_id, age, resonance, fitness) in enumerate(cells[:CELL_LIST_LIMIT]):
             col, sym = color_and_symbol(cell_id, fitness)
             # extract word
@@ -426,16 +429,14 @@ def draw_frame(conn: sqlite3.Connection,
                 parts = cell_id.split("_")
                 if len(parts) > 1:
                     word = parts[1]
-            word = (word[:20] + "…") if len(word) > 20 else word
-            src = "YOU" if is_user_cell(cell_id) else ("REPO" if is_repo_cell(cell_id) else "ORG")
-            print(f"{col}{sym}{RESET}  {src:<4} {word:<20} {fitness:>6.3f}   {resonance:>6.3f}     {age:<5}")
+            word = (word[:16] + "…") if len(word) > 16 else word
+            src = "U" if is_user_cell(cell_id) else ("R" if is_repo_cell(cell_id) else "O")
+            print(f"{col}{sym}{RESET} {src:<2} {word:<16} {fitness:.2f}  {resonance:.2f}  {age:<4}")
 
     # ===== Footer / Legend & Prompt
-    print("\n" + "─"*76)
-    print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"\n{COLORS['user']}★=Your words  {COLORS['repo']}◆=Repo changes  {COLORS['high']}█/▓/▒/░=Organic{RESET}")
-    print(f"\n{COLORS['banner']}Type to inject words (Ctrl+C to exit):{RESET}")
-    print("> ", end="", flush=True)
+    print("\n" + "─"*BANNER_WIDTH)
+    print(f"{COLORS['user']}★=You {COLORS['repo']}◆=Repo {COLORS['high']}█▓▒░=Org{RESET} | {datetime.now().strftime('%H:%M:%S')}")
+    print(f"\n{COLORS['banner']}> Type to inject:{RESET} ", end="", flush=True)
 
 # ========== MAIN LOOP ==========
 def main():
