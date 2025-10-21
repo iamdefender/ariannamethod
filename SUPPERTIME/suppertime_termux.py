@@ -12,9 +12,6 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
-# Add SUPPERTIME to path
-sys.path.append(str(Path(__file__).parent / "SUPPERTIME"))
-
 try:
     from openai import OpenAI
     from theatre import (
@@ -83,7 +80,7 @@ class SuppertimeTermux:
         
         try:
             # Load chapter text
-            chapter_file = Path("SUPPERTIME/docs") / f"chapter_{chapter_num:02d}.md"
+            chapter_file = Path("docs") / f"chapter_{chapter_num:02d}.md"
             if not chapter_file.exists():
                 print(f"{C.RED}❌ File not found: {chapter_file}{C.R}")
                 return False
