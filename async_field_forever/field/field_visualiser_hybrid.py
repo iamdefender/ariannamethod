@@ -191,11 +191,7 @@ def hsh(s: str, mod: int) -> int:
     return int.from_bytes(blake2b(s.encode(), digest_size=8).digest(), "little") % mod
 
 def base_pos(cell_id: str, w:int, h:int) -> Tuple[int,int]:
-    # Центрируем слова ближе к центру сетки
-    center_x, center_y = w//2, h//2
-    offset_x = hsh(cell_id+"_x", w//3) - w//6  # ±w/6 от центра
-    offset_y = hsh(cell_id+"_y", h//3) - h//6  # ±h/6 от центра
-    return max(0, min(w-1, center_x + offset_x)), max(0, min(h-1, center_y + offset_y))
+    return hsh(cell_id+"_x", w), hsh(cell_id+"_y", h)
 
 def drift_offset(cell_id: str, t: float, resonance: float) -> Tuple[int,int]:
     if not ENABLE_DRIFT: return (0,0)
