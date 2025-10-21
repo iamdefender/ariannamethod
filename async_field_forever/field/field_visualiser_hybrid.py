@@ -25,6 +25,14 @@ from pathlib import Path
 from hashlib import blake2b
 
 # ========== ADAPTIVE CONFIG ==========
+def get_terminal_config():
+    """Auto-detect terminal size and return adaptive config."""
+    try:
+        term_w, term_h = shutil.get_terminal_size((80, 24))
+    except:
+        term_w, term_h = 80, 24
+    
+    is_mobile = term_w < 70
     banner_w = max(50, min(80, int(term_w * 0.9)))
     
     return {
@@ -32,11 +40,11 @@ from hashlib import blake2b
         "term_h": term_h,
         "is_mobile": is_mobile,
         "banner_width": banner_w,
-        "grid_w": banner_w - 6,  # Grid немного уже banner (отступы)
+        "grid_w": banner_w - 6,
         "grid_h": 12 if is_mobile else 18,
-        "pulse_bar_w": banner_w - 10,  # Pulse bar тоже привязан к banner
+        "pulse_bar_w": banner_w - 10,
         "cell_list_limit": 2 if is_mobile else 4,
-        "grid_padding_left": 3,  # Центрируем grid
+        "grid_padding_left": 3,
     }
 
 CONFIG = get_terminal_config()
