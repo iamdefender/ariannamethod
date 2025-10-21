@@ -18,10 +18,10 @@ try:
         load_chapter_context_all, build_scene_prompt, parse_lines,
         CHAPTER_TITLES, guess_participants, HeroManager
     )
-    from config import settings
+    from config_termux import settings
 except ImportError as e:
     print(f"Error: {e}")
-    print("Make sure SUPPERTIME folder is available!")
+    print("Run: bash SUPPERTIME/install_termux.sh")
     sys.exit(1)
 
 # Terminal colors
