@@ -52,8 +52,8 @@ UI_REFRESH = 5.0  # how often to refetch DB + re-render UI frame
 # Limit rows in lists (short for mobile - keyboard blocks grid)
 CELL_LIST_LIMIT = 4
 
-# Banner width (optimized for mobile, 60 fits Termux better)
-BANNER_WIDTH = 60
+# Banner width (optimized for mobile, 40 fits Termux better)
+BANNER_WIDTH = 40
 
 # ========== FLAGS ==========
 ENABLE_COLOR = True
@@ -372,34 +372,34 @@ def draw_frame(conn: sqlite3.Connection,
     print(f"{BOLD}{COLORS['banner']}║" + "⚡ ASYNC FIELD v6 ⚡".center(BANNER_WIDTH) + f"║{RESET}")
     print(f"{BOLD}{COLORS['banner']}╚" + "═"*BANNER_WIDTH + f"╝{RESET}")
 
-    # ===== Metrics header
-    print(f"Iter: {iteration} | Pop: {cell_count}")
-    print(f"Res: {avg_resonance:.2f} | Age: {avg_age:.1f} | B: {births} D: {deaths}")
+    # ===== Metrics header (compact for mobile)
+    print(f"I:{iteration} P:{cell_count} R:{avg_resonance:.2f}")
+    print(f"Age:{avg_age:.1f} B:{births} D:{deaths}")
 
-    # ===== Resonance pulse bar
-    pw = int(max(0, min(1, avg_resonance))*40)
-    pulse_bar = COLORS["high"] + "█"*pw + RESET + "░"*(40-pw)
-    print(f"\nResonance Pulse: {pulse_bar}")
+    # ===== Resonance pulse bar (compact)
+    pw = int(max(0, min(1, avg_resonance))*20)
+    pulse_bar = COLORS["high"] + "█"*pw + RESET + "░"*(20-pw)
+    print(f"Pulse: {pulse_bar}")
 
-    # ===== Sparkline
+    # ===== Sparkline (compact)
     spark = render_sparkline(history)
     if spark:
-        print(f"Population History: {COLORS['medium']}{spark}{RESET}")
+        print(f"Hist: {COLORS['medium']}{spark}{RESET}")
 
     # ===== Injections summary
     if injected:
         user_inj = [i for i in injected if i[3]=="user"]
         repo_inj = [i for i in injected if i[3]=="repo"]
         if user_inj:
-            print(f"\n{COLORS['user']}💬 You said:{RESET}")
+            print(f"\n{COLORS['user']}★ You:{RESET}")
             for w, act, fit, _ in user_inj:
                 sym = "★" if act=="BORN" else "↑"
-                print(f"  {sym} '{w}' → {act} (fitness: {fit:.2f})")
+                print(f"  {sym} {w} ({fit:.2f})")
         if repo_inj:
-            print(f"\n{COLORS['repo']}📁 Repo changed:{RESET}")
+            print(f"\n{COLORS['repo']}◆ Repo:{RESET}")
             for w, act, fit, _ in repo_inj:
                 sym = "◆" if act=="BORN" else "↑"
-                print(f"  {sym} '{w}' → {act} (fitness: {fit:.2f})")
+                print(f"  {sym} {w} ({fit:.2f})")
 
     # ===== GRID (life in semantic space)
     # update breathing phase bound to avg_resonance for tempo
@@ -433,10 +433,10 @@ def draw_frame(conn: sqlite3.Connection,
             src = "U" if is_user_cell(cell_id) else ("R" if is_repo_cell(cell_id) else "O")
             print(f"{col}{sym}{RESET} {src:<2} {word:<16} {fitness:.2f}  {resonance:.2f}  {age:<4}")
 
-    # ===== Footer / Legend & Prompt
+    # ===== Footer / Legend & Prompt (compact)
     print("\n" + "─"*BANNER_WIDTH)
-    print(f"{COLORS['user']}★=You {COLORS['repo']}◆=Repo {COLORS['high']}█▓▒░=Org{RESET} | {datetime.now().strftime('%H:%M:%S')}")
-    print(f"\n{COLORS['banner']}> Type to inject:{RESET} ", end="", flush=True)
+    print(f"{COLORS['user']}★{COLORS['repo']}◆{COLORS['high']}█{RESET} | {datetime.now().strftime('%H:%M')}")
+    print(f"\n{COLORS['banner']}>:{RESET} ", end="", flush=True)
 
 # ========== MAIN LOOP ==========
 def main():
