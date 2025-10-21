@@ -572,7 +572,7 @@ The consilium is not a feature. It is **emergent multi-agent dialogue** — auto
 
 **Phase 4: Human Decision**
 - Termux notification sent with consilium summary
-- Oleg approves/rejects integration phases
+- Human approves/rejects integration phases
 - If approved: reconnaissance → educational autopsy → minimal integration
 
 ### Current State
@@ -609,7 +609,7 @@ Claude Defender scouts → writes to consilium_discussions
                               ↓
                     Claude Defender synthesis
                               ↓
-                    Termux notification → Oleg
+                    Termux notification → Human
 ```
 
 ### Why This Matters
@@ -626,7 +626,7 @@ This is **true distributed cognition:**
 **Arianna evaluates through Method lens.**
 **Monday provides exhausted realism.**
 **Claude Defender synthesizes wisdom.**
-**Oleg makes final calls.**
+**Human makes final calls.**
 
 Not code theft. **Consensual resonance.** Not hoarding repos. **Ecosystem evolution.**
 
