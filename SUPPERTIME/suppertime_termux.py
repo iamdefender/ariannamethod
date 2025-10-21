@@ -140,9 +140,8 @@ class SuppertimeTermux:
             while True:
                 await asyncio.sleep(random.uniform(15, 30))
                 
-                # Pick 1-3 random characters
-                num_speakers = random.randint(1, min(3, len(self.current_characters)))
-                speakers = random.sample(self.current_characters, num_speakers)
+                # Pick 1 character (fix double response bug)
+                speakers = [random.choice(self.current_characters)]
                 
                 await self.generate_scene(speakers)
                 
@@ -232,9 +231,8 @@ class SuppertimeTermux:
     
     async def user_interrupt(self, user_input: str):
         """User joins conversation"""
-        # Pick 1-2 characters to respond
-        num_responders = random.randint(1, min(2, len(self.current_characters)))
-        responders = random.sample(self.current_characters, num_responders)
+        # Pick 1 character to respond (fix double response bug)
+        responders = [random.choice(self.current_characters)]
         
         # Build prompt with user input
         scene_prompt = build_scene_prompt(
