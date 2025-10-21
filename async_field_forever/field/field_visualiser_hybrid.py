@@ -100,17 +100,22 @@ def extract_words(text: str) -> List[str]:
 def fetch_repo_words(monitor) -> List[str]:
     if not monitor: return []
     try:
-        changes = monitor.fetch_repo_context(limit=5)
+        changes = monitor.detect_changes()
         bag = []
-        for ch in changes:
-            bag += extract_words(ch.get("content",""))[:3]
+        # Extract words from modified file paths
+        for fpath in list(changes.get('modified', []))[:5]:
+            # Get filename words (e.g., "consilium_agent.py" -> ["consilium", "agent"])
+            bag += extract_words(str(fpath))
+        for fpath in list(changes.get('added', []))[:3]:
+            bag += extract_words(str(fpath))
+
         seen, out = set(), []
         for w in bag:
-            if w not in seen:
+            if w not in seen and len(w) > 3:
                 seen.add(w); out.append(w)
             if len(out) >= 10: break
         return out
-    except Exception:
+    except Exception as e:
         return []
 
 # ---------------- DB LAYER --------------

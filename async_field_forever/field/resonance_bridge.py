@@ -164,10 +164,10 @@ class ResonanceBridge:
         
         c.execute("""
             INSERT INTO field_cells (
-                timestamp, cell_id, age, resonance_score, entropy, perplexity, 
-                fitness, architecture, status
+                timestamp, cell_id, age, resonance_score, entropy, perplexity,
+                fitness, architecture, status, context
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             datetime.now().isoformat(),
             cell.id,
@@ -177,7 +177,8 @@ class ResonanceBridge:
             cell.perplexity,
             cell.evaluate_fitness(),
             str(cell.architecture),
-            "alive" if cell.alive else "dead"
+            "alive" if cell.alive else "dead",
+            cell.context if hasattr(cell, 'context') else None
         ))
         
         conn.commit()

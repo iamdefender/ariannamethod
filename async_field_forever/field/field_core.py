@@ -212,20 +212,22 @@ class Field:
             try:
                 repo_changes = self.repo_monitor.detect_changes()
                 if repo_changes:
-                    for filepath, change_type in repo_changes.items():
-                        # Create repo cell from file change
-                        repo_cell = TransformerCell(
-                            context=f"repo_{filepath}_{change_type}",
-                            neighbors=[],
-                            architecture=None
-                        )
-                        repo_cell.resonance_score = 0.7  # High initial resonance
-                        repo_cell.entropy = 0.5
-                        repo_cell.perplexity = 1.5
-                        self.cells.append(repo_cell)
-                        self.total_births += 1
-                        self.births_this_interval += 1
-                        log_metrics(f"📁 Repo cell born: {filepath} ({change_type})", "INFO")
+                    # Process added and modified files
+                    for change_type in ['added', 'modified']:
+                        for filepath in repo_changes.get(change_type, []):
+                            # Create repo cell from file change
+                            repo_cell = TransformerCell(
+                                context=f"repo_{filepath}_{change_type}",
+                                neighbors=[],
+                                architecture=None
+                            )
+                            repo_cell.resonance_score = 0.7  # High initial resonance
+                            repo_cell.entropy = 0.5
+                            repo_cell.perplexity = 1.5
+                            self.cells.append(repo_cell)
+                            self.total_births += 1
+                            self.births_this_interval += 1
+                            log_metrics(f"📁 Repo cell born: {filepath} ({change_type})", "INFO")
             except Exception as e:
                 log_metrics(f"RepoMonitor error in tick: {e}", "WARN")
         
