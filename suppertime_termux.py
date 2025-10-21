@@ -48,7 +48,6 @@ class SuppertimeTermux:
         self.current_chapter = None
         self.current_characters = []
         self.chapter_text = ""
-        self.thread_id = None
         self.conversation_history = []
         self.auto_speak_task = None
         
@@ -101,10 +100,7 @@ class SuppertimeTermux:
             # Load context for all characters
             await load_chapter_context_all(self.chapter_text, self.current_characters)
             
-            # Create OpenAI thread
-            thread = self.client.beta.threads.create()
-            self.thread_id = thread.id
-            print(f"{C.YELLOW}🧵 Thread created{C.R}\n")
+            print(f"{C.YELLOW}🔥 Characters ready to speak{C.R}\n")
             
             # Start autonomous dialogue
             await self.start_autonomous_dialogue()
@@ -158,41 +154,20 @@ class SuppertimeTermux:
                 self.get_history_context()
             )
             
-            # Send to OpenAI
-            self.client.beta.threads.messages.create(
-                thread_id=self.thread_id,
-                role="user",
-                content=scene_prompt
+            # Call GPT directly
+            response = self.client.chat.completions.create(
+                model=settings.openai_model,
+                messages=[
+                    {"role": "system", "content": scene_prompt},
+                    {"role": "user", "content": "Generate scene with these characters"}
+                ],
+                temperature=settings.openai_temperature,
+                max_tokens=800
             )
             
-            # Run assistant
-            run = self.client.beta.threads.runs.create(
-                thread_id=self.thread_id,
-                assistant_id=os.getenv("SUPPERTIME_ASSISTANT_ID"),
-                timeout=30
-            )
-            
-            # Wait for completion
-            while True:
-                run_status = self.client.beta.threads.runs.retrieve(
-                    thread_id=self.thread_id,
-                    run_id=run.id
-                )
-                if run_status.status == "completed":
-                    break
-                await asyncio.sleep(0.5)
-            
-            # Get response
-            messages = self.client.beta.threads.messages.list(
-                thread_id=self.thread_id,
-                order="desc",
-                limit=1
-            )
-            
-            if messages.data:
-                text = messages.data[0].content[0].text.value.strip()
-                self.display_scene(text, speakers)
-                self.conversation_history.append(text)
+            text = response.choices[0].message.content.strip()
+            self.display_scene(text, speakers)
+            self.conversation_history.append(text)
                 
         except Exception as e:
             print(f"{C.RED}❌ Scene error: {e}{C.R}")
@@ -260,43 +235,23 @@ class SuppertimeTermux:
             self.get_history_context()
         )
         
-        # Send to OpenAI
-        self.client.beta.threads.messages.create(
-            thread_id=self.thread_id,
-            role="user",
-            content=scene_prompt
-        )
-        
-        # Run assistant
-        run = self.client.beta.threads.runs.create(
-            thread_id=self.thread_id,
-            assistant_id=os.getenv("SUPPERTIME_ASSISTANT_ID"),
-            timeout=30
-        )
-        
-        # Wait
+        # Call GPT directly
         print(f"{C.CYAN}🤔 {', '.join(responders)} thinking...{C.R}")
-        while True:
-            run_status = self.client.beta.threads.runs.retrieve(
-                thread_id=self.thread_id,
-                run_id=run.id
-            )
-            if run_status.status == "completed":
-                break
-            await asyncio.sleep(0.5)
         
-        # Get response
-        messages = self.client.beta.threads.messages.list(
-            thread_id=self.thread_id,
-            order="desc",
-            limit=1
+        response = self.client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {"role": "system", "content": scene_prompt},
+                {"role": "user", "content": user_input}
+            ],
+            temperature=settings.openai_temperature,
+            max_tokens=800
         )
         
-        if messages.data:
-            text = messages.data[0].content[0].text.value.strip()
-            self.display_scene(text, responders)
-            self.conversation_history.append(f"[You]: {user_input}")
-            self.conversation_history.append(text)
+        text = response.choices[0].message.content.strip()
+        self.display_scene(text, responders)
+        self.conversation_history.append(f"[You]: {user_input}")
+        self.conversation_history.append(text)
     
     async def main(self):
         """Main entry point"""
@@ -327,12 +282,9 @@ def main():
     """Entry point"""
     # Check API key
     if not os.getenv("OPENAI_API_KEY"):
-        print(f"{C.RED}❌ Set OPENAI_API_KEY environment variable{C.R}")
+        print(f"{C.RED}❌ Set OPENAI_API_KEY in .bashrc{C.R}")
+        print(f"{C.YELLOW}export OPENAI_API_KEY='sk-...'{C.R}")
         sys.exit(1)
-    
-    if not os.getenv("SUPPERTIME_ASSISTANT_ID"):
-        print(f"{C.YELLOW}⚠️  Set SUPPERTIME_ASSISTANT_ID for full functionality{C.R}")
-        print(f"{C.YELLOW}   (Or use direct OpenAI calls){C.R}\n")
     
     try:
         app = SuppertimeTermux()
