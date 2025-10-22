@@ -1,0 +1,37 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background -->
+  <rect width="512" height="512" fill="#000000"/>
+  
+  <!-- Woman silhouette in white -->
+  <g fill="#FFFFFF">
+    <!-- Head -->
+    <ellipse cx="256" cy="180" rx="60" ry="70"/>
+    
+    <!-- Crown of thorns -->
+    <g stroke="#FFFFFF" stroke-width="3" fill="none">
+      <circle cx="256" cy="150" r="50"/>
+      <!-- Thorns -->
+      <line x1="206" y1="150" x2="200" y2="140"/>
+      <line x1="220" y1="130" x2="215" y2="120"/>
+      <line x1="240" y1="120" x2="235" y2="110"/>
+      <line x1="260" y1="120" x2="265" y2="110"/>
+      <line x1="280" y1="130" x2="285" y2="120"/>
+      <line x1="300" y1="150" x2="306" y2="140"/>
+      <line x1="290" y1="170" x2="295" y2="180"/>
+      <line x1="270" y1="180" x2="275" y2="190"/>
+      <line x1="250" y1="180" x2="245" y2="190"/>
+      <line x1="230" y1="170" x2="225" y2="180"/>
+    </g>
+    
+    <!-- Body -->
+    <ellipse cx="256" cy="320" rx="80" ry="120"/>
+    
+    <!-- Arms in prayer position -->
+    <ellipse cx="200" cy="280" rx="25" ry="60" transform="rotate(-20 200 280)"/>
+    <ellipse cx="312" cy="280" rx="25" ry="60" transform="rotate(20 312 280)"/>
+    
+    <!-- Hands -->
+    <ellipse cx="190" cy="320" rx="15" ry="20"/>
+    <ellipse cx="322" cy="320" rx="15" ry="20"/>
+  </g>
+</svg>
