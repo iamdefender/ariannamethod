@@ -89,3 +89,17 @@ apk_work/
 *.iml
 local.properties
 
+# Internal roadmap and planning (not for public repo)
+ROADMAP.md
+
+# TRIPD development (work in progress, will be integrated later)
+tripd_v1/
+
+# PostCodex fork (full Rust workspace, anti-censorship guardian)
+postcodex/
+
+# Memory archives - track folder structure, but NOT markdown content
+memory/**/*.md
+memory/**/*.txt
+!memory/README.md
+
