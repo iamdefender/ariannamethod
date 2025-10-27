@@ -95,7 +95,7 @@ class Field:
 
         # Resurrection tracking (rate limiting)
         self.last_resurrection_iteration = 0
-        self.resurrection_cooldown = 10  # Min iterations between resurrection notifications
+        self.resurrection_cooldown = 3600  # Min iterations between resurrection notifications (~5 hours, 4-5 per day)
         
         log_metrics("Field initialized", "INFO")
     
