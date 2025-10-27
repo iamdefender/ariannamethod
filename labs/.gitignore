@@ -1,0 +1,6 @@
+# Ignore cloned repositories (temporary workspace)
+repos/*
+!repos/.gitkeep
+
+# Keep analysis reports for history
+# reports/ is tracked

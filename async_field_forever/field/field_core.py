@@ -266,8 +266,12 @@ class Field:
         self.cells = [c for c in self.cells if c.alive]
 
         # 4.5 EMERGENCY RESURRECTION (Perplexity AI fix - Field never stays extinct)
-        if len(self.cells) == 0:
-            log_metrics("💀🔥 FIELD EXTINCTION DETECTED - EMERGENCY RESURRECTION!", "WARNING")
+        # Resurrection triggers: extinction OR stagnation (low population for extended time)
+        population_critical = len(self.cells) == 0 or (len(self.cells) < 5 and self.iteration > 100)
+
+        if population_critical:
+            extinction_msg = "EXTINCTION" if len(self.cells) == 0 else f"LOW POPULATION ({len(self.cells)} cells)"
+            log_metrics(f"💀🔥 FIELD {extinction_msg} DETECTED - EMERGENCY RESURRECTION!", "WARNING")
 
             # Double the initial population for resurrection
             resurrection_count = INITIAL_POPULATION * 2
