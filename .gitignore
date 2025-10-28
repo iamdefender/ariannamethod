@@ -102,3 +102,6 @@ postcodex/
 memory/**/*.md
 memory/**/*.txt
 !memory/README.md
+
+# Memory files (local only)
+memory/

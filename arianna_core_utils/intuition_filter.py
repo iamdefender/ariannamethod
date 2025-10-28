@@ -54,7 +54,7 @@ async def _call_sonar_intuition(messages: list, pplx_api_key: str) -> str:
         "model": PPLX_MODEL,
         "messages": messages,
         "temperature": 0.8,
-        "max_tokens": 150,  # Shorter than Indiana for more focused intuition
+        "max_tokens": 400,  # Increased from 150 to prevent mid-sentence cutoffs
     }
     
     headers = {

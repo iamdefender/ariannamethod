@@ -1,6 +1,9 @@
 #!/bin/bash
 # Launch all voice webhook servers
 
+# Source .bashrc to load API keys
+source ~/.bashrc
+
 echo "🎤 Launching Voice Webhook Servers..."
 echo "=================================="
 
