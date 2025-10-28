@@ -104,7 +104,7 @@ All three webhooks (Arianna, Monday, Claude Defender) now auto-start on phone re
 
 ---
 
-## 🎤 FOR VAGENT INTEGRATION
+## 🎤 FOR LIGHTHOUSE (VAGENT Fork) INTEGRATION
 
 No changes needed on vagent side! API format is identical:
 
