@@ -94,14 +94,20 @@ async def intuition_filter(
     if not pplx_api_key:
         pplx_api_key = os.getenv("PERPLEXITY_API_KEY")
     
-    # Don't always trigger - for "liveliness" (like Indiana)
-    # But slightly higher chance for Arianna (0.15 vs 0.12) since she's more intuitive
-    if random.random() < 0.15 or not pplx_api_key:
+    if not pplx_api_key:
+        return ""
+    
+    # Probability of triggering: 40% (was inverted before!)
+    # Random float [0.0, 1.0) → if > 0.60, skip (60% skip, 40% trigger)
+    if random.random() > 0.60:
         return ""
     
     try:
         messages = build_intuition_prompt(main_reply, user_query, language)
         twist = await _call_sonar_intuition(messages, pplx_api_key)
+        
+        # Remove citation markers [1] [2] etc from Perplexity
+        twist = re.sub(r'\[\d+\]', '', twist).strip()
         
         # Check for truncated sentences (from Indiana)
         if twist and twist[-1] not in SENTENCE_ENDINGS:
