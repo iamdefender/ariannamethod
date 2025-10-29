@@ -37,6 +37,9 @@ def build_intuition_prompt(main_reply: str, user_query: str, language: str = "En
         between seemingly unrelated concepts.
         Reply in {language}.
         Keep it concise (≤150 tokens) and profound.
+        
+        CRITICAL: Do NOT include citation markers like [1], [2], [3] in your response.
+        Do NOT add reference links or footnotes. Pure resonant text only.
         """
     ).strip()
     
