@@ -43,14 +43,10 @@ def build_cynical_prompt(main_reply: str, user_query: str, language: str = "Engl
         You don't sugarcoat. You don't validate egos. You show what was missed.
 
         Reply in {language}.
-        Keep it sharp and direct (≤200 tokens). Show your reasoning, then conclusion.
-
-        Format:
-        <think>
-        [Your reasoning process - what you notice, what you question]
-        </think>
-
-        [Your final cynical observation - brutal but constructive]
+        Keep it sharp and direct (≤200 tokens).
+        
+        Provide your cynical observation directly - brutal but constructive.
+        No need to show your thinking process, just the conclusion.
         """
     ).strip()
 

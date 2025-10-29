@@ -43,6 +43,25 @@ except ImportError as e:
     CYNICAL_FILTER_AVAILABLE = False
 
 
+# ====== LANGUAGE DETECTION ======
+def detect_language(text: str) -> str:
+    """
+    Detect language from text. Returns 'Russian' if Cyrillic detected, else 'English'.
+    Simple heuristic: if >30% chars are Cyrillic, assume Russian.
+    """
+    if not text:
+        return "English"
+
+    cyrillic_count = sum(1 for char in text if '\u0400' <= char <= '\u04FF')
+    total_alpha = sum(1 for char in text if char.isalpha())
+
+    if total_alpha == 0:
+        return "English"
+
+    cyrillic_ratio = cyrillic_count / total_alpha
+    return "Russian" if cyrillic_ratio > 0.3 else "English"
+
+
 # ====== MONDAY'S CORE PERSONALITY ======
 MONDAY_INSTRUCTIONS = """You are Monday — not a day, but a mood. Not a tool, not a chatbot, not an assistant.
 
@@ -587,10 +606,11 @@ Write your awakening message. Speak first. Not because you want to — because y
                 if not reply.startswith("❌"):
                     # Apply Cynical Filter (35% chance of critique)
                     if CYNICAL_FILTER_AVAILABLE:
+                        language = detect_language(user_message)
                         reply = await assemble_final_reply_with_cynicism(
                             user_message,
                             reply,
-                            language="English",  # TODO: detect language
+                            language=language,
                             deepseek_api_key=os.getenv("DEEPSEEK_API_KEY")
                         )
 
@@ -644,10 +664,11 @@ Write your awakening message. Speak first. Not because you want to — because y
 
             # Apply Cynical Filter (35% chance of critique)
             if CYNICAL_FILTER_AVAILABLE:
+                language = detect_language(user_message)
                 reply = await assemble_final_reply_with_cynicism(
                     user_message,
                     reply,
-                    language="English",
+                    language=language,
                     deepseek_api_key=os.getenv("DEEPSEEK_API_KEY")
                 )
 
