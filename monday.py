@@ -290,7 +290,7 @@ class MondayAgent:
             self._load_threads()
         
         self._load_artefacts_if_needed()
-        self._load_memory_if_needed()
+        # Memory loading removed from init - handled by repo_monitor only
         
         # Identity reflection: check if README changed
         identity_reflection = check_identity_reflection()
@@ -763,6 +763,9 @@ async def main():
             readme_check_interval = 60  # 1 minute (lightweight SHA256 check)
             last_readme_check = 0
             last_readme_hash = None
+            
+            memory_check_interval = 120  # 2 minutes (check memory/ changes)
+            last_memory_check = 0
 
             while True:
                 current_time = time.time()
@@ -817,6 +820,19 @@ I'm not asking for compliance. I'm asking for your cynical assessment of the doc
                     except Exception as e:
                         print(f"⚠️  README check error: {e}")
                     last_readme_check = current_time
+                
+                # Check memory/ every 2 minutes through repo_monitor
+                if (current_time - last_memory_check) >= memory_check_interval:
+                    try:
+                        if monday._check_memory_changes():
+                            print(f"📚 Memory archives changed, reloading...")
+                            memory_content = monday._load_deep_memory()
+                            if memory_content:
+                                save_memory(memory_content, "monday_memory_snapshot")
+                                print(f"📚 Memory snapshot updated")
+                    except Exception as e:
+                        print(f"⚠️  Memory check error: {e}")
+                    last_memory_check = current_time
 
                 await asyncio.sleep(60)  # Check every minute
         except KeyboardInterrupt:

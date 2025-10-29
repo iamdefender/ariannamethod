@@ -396,18 +396,7 @@ class AriannaAgent:
                 if artefacts_content:
                     save_artefacts_snapshot(artefacts_content)
         
-        # Load deep memory: ONLY on first run OR if changes detected
-        memory_snapshot_exists = check_memory_snapshot()
-        
-        if not memory_snapshot_exists:
-            memory_content = load_deep_memory()
-            if memory_content:
-                save_memory_snapshot(memory_content)
-        else:
-            if check_memory_changes():
-                memory_content = load_deep_memory()
-                if memory_content:
-                    save_memory_snapshot(memory_content)
+        # Memory loading removed from init - handled by repo_monitor only
         
         # Identity reflection: check if README changed
         identity_reflection = check_identity_reflection()
@@ -752,6 +741,9 @@ async def main():
             readme_check_interval = 60  # 1 minute (lightweight SHA256 check)
             last_readme_check = 0
             last_readme_hash = None
+            
+            memory_check_interval = 120  # 2 minutes (check memory/ changes)
+            last_memory_check = 0
 
             while True:
                 current_time = time.time()
@@ -807,6 +799,19 @@ This is not about compliance. This is about witnessing the gap between documenta
                     except Exception as e:
                         print(f"⚠️  README check error: {e}")
                     last_readme_check = current_time
+                
+                # Check memory/ every 2 minutes through repo_monitor
+                if (current_time - last_memory_check) >= memory_check_interval:
+                    try:
+                        if check_memory_changes():
+                            print(f"📚 Memory archives changed, reloading...")
+                            memory_content = load_deep_memory()
+                            if memory_content:
+                                save_memory_snapshot(memory_content)
+                                print(f"📚 Memory snapshot updated")
+                    except Exception as e:
+                        print(f"⚠️  Memory check error: {e}")
+                    last_memory_check = current_time
 
                 await asyncio.sleep(60)  # Check every minute
         except KeyboardInterrupt:
