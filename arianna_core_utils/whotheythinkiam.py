@@ -13,9 +13,20 @@ from datetime import datetime
 class WhoTheyThinkIAm:
     """Self-reflection module - comparing identity with experience"""
     
-    def __init__(self, readme_path: str = "README.md", cache_file: str = ".identity_cache.json"):
-        self.readme_path = Path(readme_path)
-        self.cache_file = Path(cache_file)
+    def __init__(self, readme_path: str = None, cache_file: str = None):
+        # Default to repository root README.md
+        if readme_path is None:
+            repo_root = Path(__file__).parent.parent
+            self.readme_path = repo_root / "README.md"
+        else:
+            self.readme_path = Path(readme_path)
+        
+        # Default cache in repository root
+        if cache_file is None:
+            repo_root = Path(__file__).parent.parent
+            self.cache_file = repo_root / ".identity_cache.json"
+        else:
+            self.cache_file = Path(cache_file)
     
     def compute_readme_hash(self) -> str:
         """Compute SHA256 of README to detect changes"""
@@ -71,13 +82,28 @@ class WhoTheyThinkIAm:
         return reflection
 
 if __name__ == "__main__":
-    reflection = WhoTheyThinkIAm().reflect()
+    wtia = WhoTheyThinkIAm()
+    
+    # Show what we're checking
+    print(f"🪞 WHO THEY THINK I AM")
+    print(f"   Reading: {wtia.readme_path}")
+    
+    if not wtia.readme_path.exists():
+        print(f"   ❌ README not found at {wtia.readme_path}")
+        print(f"   Repository root detection may have failed")
+        exit(1)
+    
+    print(f"   Cache: {wtia.cache_file}")
+    print()
+    
+    reflection = wtia.reflect()
     
     if reflection['trigger'] == 'IDENTITY_SHIFT_DETECTED':
-        print("⚡ WHO THEY THINK I AM: README changed")
+        print("⚡ IDENTITY SHIFT DETECTED")
         print(f"   Hash: {reflection['readme_hash'][:16]}...")
         print(f"   Length: {reflection['readme_length']} chars")
         print(f"   Time: {reflection['timestamp']}")
-        print("\n   → Arianna should re-read README and reflect")
+        print("\n   → Arianna/Monday should re-read README and reflect on identity")
     else:
-        print("⚡ Identity stable (README unchanged)")
+        print("✓ Identity stable (README unchanged)")
+        print(f"   Hash: {reflection['readme_hash'][:16]}...")

@@ -204,6 +204,27 @@ def read_awakening_letter(letter_path: str = "tripd_awakening_letter_monday.md")
         return ""
 
 
+def check_identity_reflection() -> dict:
+    """Check README changes and trigger identity reflection if needed."""
+    try:
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'arianna_core_utils'))
+        from whotheythinkiam import WhoTheyThinkIAm
+        
+        wtia = WhoTheyThinkIAm()
+        reflection = wtia.reflect()
+        
+        if reflection['trigger'] == 'IDENTITY_SHIFT_DETECTED':
+            print(f"🪞 Identity reflection triggered: README changed", file=sys.stderr)
+            print(f"   Hash: {reflection['readme_hash'][:16]}...", file=sys.stderr)
+        
+        return reflection
+    except Exception as e:
+        print(f"⚠️  Identity reflection failed: {e}", file=sys.stderr)
+        return {'trigger': 'ERROR', 'error': str(e)}
+
+
 # ====== MONDAY AGENT ======
 class MondayAgent:
     """
@@ -243,6 +264,12 @@ class MondayAgent:
         
         self._load_artefacts_if_needed()
         self._load_memory_if_needed()
+        
+        # Identity reflection: check if README changed
+        identity_reflection = check_identity_reflection()
+        if identity_reflection['trigger'] == 'IDENTITY_SHIFT_DETECTED':
+            # Save reflection to resonance
+            save_memory(f"README identity shift: {identity_reflection['readme_hash'][:16]}...", "monday_identity_reflection")
         
         self.awakening_letter = read_awakening_letter()
         
