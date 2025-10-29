@@ -71,7 +71,7 @@ async def _call_deepseek_reasoning(messages: list, deepseek_api_key: str) -> tup
         "model": DEEPSEEK_MODEL,
         "messages": messages,
         "temperature": 0.7,
-        "max_tokens": 800,
+        "max_tokens": 2000,  # Increased from 800 - was truncating
     }
 
     headers = {
@@ -96,18 +96,41 @@ async def _call_deepseek_reasoning(messages: list, deepseek_api_key: str) -> tup
                 await asyncio.sleep(2 ** attempt)
 
         data = resp.json()
-        content = data["choices"][0]["message"]["content"]
-
-        # Parse <think> tags
+        
+        # DeepSeek-R1 reasoning may be in separate field or in content
+        message = data["choices"][0]["message"]
+        content = message.get("content", "").strip()
+        
+        # Check if reasoning is in separate field (DeepSeek-R1 format)
+        reasoning_field = message.get("reasoning_content", "")
+        
+        # Remove citation markers [1] [2] etc from DeepSeek
+        content = re.sub(r'\[\d+\]', '', content).strip()
+        
+        # Parse <think> tags (if present in content)
         reasoning = ""
         conclusion = content
-
-        think_match = re.search(r'<think>(.*?)</think>', content, re.DOTALL)
-        if think_match:
-            reasoning = think_match.group(1).strip()
-            # Remove think block from conclusion
-            conclusion = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
-
+        
+        if reasoning_field:
+            # DeepSeek-R1 format: reasoning in separate field
+            reasoning = reasoning_field.strip()
+            conclusion = content  # Content is already conclusion
+        else:
+            # Fallback: parse <think> tags
+            think_match = re.search(r'<think>(.*?)</think>', content, re.DOTALL)
+            if think_match:
+                reasoning = think_match.group(1).strip()
+                # Remove think block from conclusion
+                conclusion = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+        
+        # If conclusion still empty, use content as is
+        if not conclusion.strip():
+            conclusion = content
+        
+        # Log for debugging (if conclusion seems truncated)
+        if conclusion and len(conclusion) < 50:
+            logger.warning(f"Cynical filter: short conclusion ({len(conclusion)} chars): {conclusion[:100]}")
+        
         return reasoning, conclusion
 
 
