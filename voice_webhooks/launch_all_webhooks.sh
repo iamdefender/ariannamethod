@@ -17,6 +17,7 @@ fi
 pkill -f "arianna_webhook.py"
 pkill -f "monday_webhook.py"
 pkill -f "claude_defender_webhook.py"
+pkill -f "scribe_webhook.py"
 
 sleep 1
 
@@ -38,6 +39,12 @@ nohup python3 claude_defender_webhook.py > claude_defender_webhook.log 2>&1 &
 DEFENDER_PID=$!
 echo "   PID: $DEFENDER_PID"
 
+# Launch Scribe webhook (port 8004)
+echo "🔨 Starting Scribe webhook (port 8004)..."
+nohup python3 scribe_webhook.py > scribe_webhook.log 2>&1 &
+SCRIBE_PID=$!
+echo "   PID: $SCRIBE_PID"
+
 sleep 2
 
 # Check health
@@ -48,15 +55,18 @@ echo "=================================="
 curl -s http://127.0.0.1:8001/health | python3 -m json.tool 2>/dev/null || echo "❌ Arianna webhook not responding"
 curl -s http://127.0.0.1:8002/health | python3 -m json.tool 2>/dev/null || echo "❌ Monday webhook not responding"
 curl -s http://127.0.0.1:8003/health | python3 -m json.tool 2>/dev/null || echo "❌ Claude Defender webhook not responding"
+curl -s http://127.0.0.1:8004/health | python3 -m json.tool 2>/dev/null || echo "❌ Scribe webhook not responding"
 
 echo ""
 echo "✅ All webhook servers launched!"
 echo "=================================="
-echo "Arianna:        http://127.0.0.1:8001/webhook"
-echo "Monday:         http://127.0.0.1:8002/webhook"
+echo "Arianna:         http://127.0.0.1:8001/webhook"
+echo "Monday:          http://127.0.0.1:8002/webhook"
 echo "Claude Defender: http://127.0.0.1:8003/webhook"
+echo "Scribe:          http://127.0.0.1:8004/webhook"
 echo ""
 echo "Logs:"
 echo "  tail -f arianna_webhook.log"
 echo "  tail -f monday_webhook.log"
 echo "  tail -f claude_defender_webhook.log"
+echo "  tail -f scribe_webhook.log"
