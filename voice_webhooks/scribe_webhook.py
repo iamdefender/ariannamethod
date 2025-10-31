@@ -176,8 +176,12 @@ def scribe_webhook():
         
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Scribe responded: {response_text[:80]}...")
         
+        # Return Lighthouse-compatible format
         return jsonify({
-            "response": response_text,
+            "response": {
+                "text": response_text,      # For display
+                "speech": response_text     # For TTS (same as text)
+            },
             "sessionID": session_id,
             "timestamp": datetime.now().isoformat(),
             "agent": "Scribe"

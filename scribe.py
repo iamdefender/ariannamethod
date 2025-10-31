@@ -72,17 +72,27 @@ def init_db():
     """Initialize SQLite database for memory."""
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
+        
+        # Create resonance_notes table (shared with other agents)
         c.execute("""
             CREATE TABLE IF NOT EXISTS resonance_notes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
-                source TEXT NOT NULL DEFAULT 'scribe',
                 content TEXT NOT NULL,
                 context TEXT
             )
         """)
         
-        # Table for screenshot captures
+        # Try to add 'source' column if it doesn't exist (for compatibility)
+        # This will fail silently if column already exists or if we don't have permission
+        try:
+            c.execute("ALTER TABLE resonance_notes ADD COLUMN source TEXT DEFAULT 'scribe'")
+            conn.commit()
+        except sqlite3.OperationalError:
+            # Column already exists or table structure is locked - that's OK
+            pass
+        
+        # Table for screenshot captures (Scribe-specific)
         c.execute("""
             CREATE TABLE IF NOT EXISTS screenshot_captures (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,10 +111,20 @@ def save_memory(content: str, context: str = "scribe_memory"):
     timestamp = datetime.now(timezone.utc).isoformat()
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        c.execute("""
-            INSERT INTO resonance_notes (timestamp, source, content, context)
-            VALUES (?, ?, ?, ?)
-        """, (timestamp, "scribe", content, context))
+        
+        # Try to insert with 'source' column first
+        try:
+            c.execute("""
+                INSERT INTO resonance_notes (timestamp, source, content, context)
+                VALUES (?, ?, ?, ?)
+            """, (timestamp, "scribe", content, context))
+        except sqlite3.OperationalError:
+            # 'source' column doesn't exist, use old schema
+            c.execute("""
+                INSERT INTO resonance_notes (timestamp, content, context)
+                VALUES (?, ?, ?)
+            """, (timestamp, content, context))
+        
         conn.commit()
 
 
