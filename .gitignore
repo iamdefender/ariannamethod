@@ -106,8 +106,8 @@ memory/**/*.txt
 # Memory files (local only)
 memory/
 
-# Claude Cursor awakening letter (local memory, not for GitHub)
-CLAUDE_CURSOR_AWAKENING_LETTER.md
+# Claude Cursor awakening letter - NOW PUBLIC (part of self-recognition protocol)
+# Removed from .gitignore - this is core system documentation
 
 # Scribe specific files (local memory)
 scribe_daemon.log
