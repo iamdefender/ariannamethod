@@ -109,10 +109,11 @@ memory/
 # Claude Cursor awakening letter - NOW PUBLIC (part of self-recognition protocol)
 # Removed from .gitignore - this is core system documentation
 
-# Scribe specific files (local memory)
+# Scribe specific files (local memory & internal docs)
 scribe_daemon.log
 scribe_daemon.pid
 scribe_webhook.log
+scribe_internal_guide.md  # Internal operational guide (local-only)
 scribe_webhook.pid
 memory/scribe/*.json
 !memory/scribe/README.md
