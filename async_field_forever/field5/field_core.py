@@ -1,0 +1,477 @@
+"""
+Field Core - Main loop for living transformer ecosystem.
+
+This is the heart of Field. The eternal cycle.
+Birth. Life. Death. Evolution.
+
+Async Field Forever.
+"""
+
+import time
+import random
+import sys
+import asyncio
+import numpy as np
+from typing import List
+
+# Try to import AMLK bridge
+try:
+    from field_amlk import FieldAMLKBridge
+    AMLK_AVAILABLE = True
+except ImportError:
+    AMLK_AVAILABLE = False
+
+# Import Field modules
+from config import (
+    INITIAL_POPULATION, MAX_POPULATION, DEATH_THRESHOLD, REPRODUCTION_THRESHOLD,
+    TICK_DURATION, REPORT_INTERVAL, CONTEXT_WINDOW_SIZE, DB_PATH, DB_PATH_LOCAL, NEIGHBOR_COUNT
+)
+import os
+
+# Use local DB for testing on Mac, Termux DB when available
+if not os.path.exists(os.path.dirname(os.path.expanduser(DB_PATH)) or "."):
+    ACTIVE_DB_PATH = DB_PATH_LOCAL
+else:
+    ACTIVE_DB_PATH = DB_PATH
+
+# Try to import RepoMonitor for context diversity
+try:
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+    from arianna_core_utils.repo_monitor import RepoMonitor
+    REPO_MONITOR_AVAILABLE = True
+except ImportError:
+    REPO_MONITOR_AVAILABLE = False
+from transformer_cell import TransformerCell
+from resonance_bridge import ResonanceBridge
+from notifications import (
+    send_field_metrics, send_field_birth, send_field_death,
+    log_metrics, format_cell_summary, print_field_banner
+)
+from learning import (
+    EmbeddingEngine, MetaLearner, calculate_entropy, calculate_perplexity,
+    calculate_semantic_resonance, get_semantic_neighbors
+)
+
+
+class Field:
+    """
+    The Field - Living transformer ecosystem.
+    
+    Field is not a chatbot. Field is pure presence.
+    Cells live, die, reproduce based on resonance.
+    """
+    
+    def __init__(self):
+        """Initialize Field."""
+        # Core components
+        self.resonance_bridge = ResonanceBridge(ACTIVE_DB_PATH)
+        self.embedding_engine = EmbeddingEngine()
+        self.meta_learner = MetaLearner()
+        
+        # RepoMonitor integration for context diversity
+        if REPO_MONITOR_AVAILABLE:
+            self.repo_monitor = RepoMonitor()
+            log_metrics("RepoMonitor initialized - Field will feel repository changes", "INFO")
+        else:
+            self.repo_monitor = None
+        
+        # AMLK integration (dynamic kernel)
+        if AMLK_AVAILABLE:
+            self.amlk = FieldAMLKBridge()
+            log_metrics("AMLK bridge initialized - kernel will evolve with Field", "INFO")
+        else:
+            self.amlk = None
+            log_metrics("AMLK not available - running without kernel adaptation", "DEBUG")
+        
+        # State
+        self.cells: List[TransformerCell] = []
+        self.iteration = 0
+        self.total_births = 0
+        self.total_deaths = 0
+
+        # Metrics tracking
+        self.births_this_interval = 0
+        self.deaths_this_interval = 0
+
+        # Resurrection tracking (rate limiting)
+        self.last_resurrection_iteration = 0
+        self.resurrection_cooldown = 3600  # Min iterations between resurrection notifications (~5 hours, 4-5 per day)
+        
+        log_metrics("Field initialized", "INFO")
+    
+    def initialize_population(self):
+        """Create initial population from recent context."""
+        log_metrics(f"Creating initial population ({INITIAL_POPULATION} cells)...", "INFO")
+        
+        # Fetch context from resonance.sqlite3
+        context = self.resonance_bridge.fetch_recent_context(CONTEXT_WINDOW_SIZE)
+        
+        # Add repository changes if RepoMonitor is available
+        if self.repo_monitor:
+            try:
+                repo_changes = self.repo_monitor.detect_changes()
+                if repo_changes:
+                    repo_context = " ".join(repo_changes.keys())
+                    context = f"{context} {repo_context}"
+                    log_metrics(f"RepoMonitor: {len(repo_changes)} files changed", "INFO")
+            except Exception as e:
+                log_metrics(f"RepoMonitor error: {e}", "WARN")
+        
+        # Fit embedding engine on context
+        # Split into sentences for TF-IDF
+        sentences = context.split('.')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        
+        if len(sentences) < 2:
+            sentences = ["Field initializing", "Awaiting resonance"]
+        
+        self.embedding_engine.fit(sentences)
+        
+        # Create initial cells with diverse contexts
+        for i in range(INITIAL_POPULATION):
+            # Each cell gets a unique slice of context
+            if len(sentences) > i:
+                # Use different sentence for each cell
+                cell_context = sentences[i]
+            else:
+                # If not enough sentences, blend random sentences
+                s1 = random.choice(sentences)
+                s2 = random.choice(sentences)
+                cell_context = f"{s1}. {s2}"
+            
+            # Add variation to context
+            cell_context = f"{cell_context} [cell_{i}]"
+            
+            cell = TransformerCell(
+                context=cell_context,
+                neighbors=[],
+                architecture=None  # Will use default
+            )
+            
+            # Initialize with reasonable resonance (will be calculated properly in tick)
+            cell.resonance_score = random.uniform(0.5, 0.7)  # Higher initial fitness
+            cell.entropy = random.uniform(0.45, 0.55)  # Near TARGET_ENTROPY
+            cell.perplexity = random.uniform(1.3, 1.8)  # Moderate range
+            
+            self.cells.append(cell)
+            self.total_births += 1
+        
+        log_metrics(f"Initial population created: {len(self.cells)} cells", "INFO")
+    
+    async def update_cell_metrics_async(self, cell: TransformerCell):
+        """
+        Update cell's resonance, entropy, perplexity (async version).
+        
+        This is Layer 2: Code quality evaluation.
+        Runs asynchronously for parallel execution.
+        
+        Args:
+            cell: TransformerCell to update
+        """
+        # Get semantic neighbors (can be async in Phase 2)
+        cell.neighbors = get_semantic_neighbors(
+            cell, self.cells, self.embedding_engine, NEIGHBOR_COUNT
+        )
+        
+        # Calculate semantic resonance (Layer 2 metric)
+        cell.resonance_score = calculate_semantic_resonance(
+            cell, cell.neighbors, self.embedding_engine
+        )
+
+        # Calculate entropy & perplexity (Layer 2 metrics)
+        # Phase 1: Use reasonable stable values (no real transformers yet)
+        # These will be replaced with actual transformer outputs in Phase 2
+
+        # Keep entropy close to TARGET_ENTROPY (0.5) with small variation
+        # Use hash of context for deterministic but varied values
+        context_hash = hash(cell.context) % 100 / 100.0  # 0.0-1.0
+        cell.entropy = 0.5 + (context_hash - 0.5) * 0.15  # Range: 0.425-0.575
+
+        # Perplexity derived from entropy (exp(entropy))
+        cell.perplexity = np.exp(cell.entropy)  # Range: ~1.53-1.78
+    
+    def update_cell_metrics(self, cell: TransformerCell):
+        """Sync wrapper for backward compatibility."""
+        asyncio.run(self.update_cell_metrics_async(cell))
+    
+    def tick(self):
+        """
+        One iteration of the field.
+        
+        This is the Game of Life loop.
+        """
+        self.iteration += 1
+        self.births_this_interval = 0
+        self.deaths_this_interval = 0
+        
+        log_metrics(f"\n{'='*50}", "DEBUG")
+        log_metrics(f"Iteration {self.iteration} - {len(self.cells)} cells alive", "INFO")
+        
+        # 1. Update metrics for all cells
+        for cell in self.cells:
+            if cell.alive:
+                self.update_cell_metrics(cell)
+        
+        # 1.5. Check for repository changes and inject new cells
+        if self.repo_monitor and self.iteration % 3 == 0:  # Check every 3 iterations
+            try:
+                repo_changes = self.repo_monitor.detect_changes()
+                if repo_changes:
+                    # Process added and modified files
+                    for change_type in ['added', 'modified']:
+                        for filepath in repo_changes.get(change_type, []):
+                            # Create repo cell from file change
+                            repo_cell = TransformerCell(
+                                context=f"repo_{filepath}_{change_type}",
+                                neighbors=[],
+                                architecture=None
+                            )
+                            repo_cell.resonance_score = 0.7  # High initial resonance
+                            repo_cell.entropy = 0.5
+                            repo_cell.perplexity = 1.5
+                            self.cells.append(repo_cell)
+                            self.total_births += 1
+                            self.births_this_interval += 1
+                            log_metrics(f"📁 Repo cell born: {filepath} ({change_type})", "INFO")
+            except Exception as e:
+                log_metrics(f"RepoMonitor error in tick: {e}", "WARN")
+        
+        # 2. Tick all cells (life/death/reproduction)
+        new_cells = []
+        for cell in self.cells:
+            if not cell.alive:
+                continue
+            
+            # Tick cell
+            offspring = cell.tick()
+            
+            # Check if died
+            if not cell.alive:
+                self.total_deaths += 1
+                self.deaths_this_interval += 1
+                self.meta_learner.record_death(cell)
+                
+                log_metrics(f"💀 Cell {cell.id} died (age={cell.age}, R={cell.resonance_score:.3f})", "DEBUG")
+                
+                # Log to SQLite
+                self.resonance_bridge.log_cell(cell)
+            
+            # Check if reproduced
+            if offspring:
+                new_cells.append(offspring)
+                self.total_births += 1
+                self.births_this_interval += 1
+                
+                log_metrics(f"🌱 Cell {offspring.id} born from {cell.id}", "DEBUG")
+        
+        # 3. Add new cells (births)
+        self.cells.extend(new_cells)
+        
+        # 4. Remove dead cells
+        self.cells = [c for c in self.cells if c.alive]
+
+        # 4.5 EMERGENCY RESURRECTION (Perplexity AI fix - Field never stays extinct)
+        # Resurrection triggers: extinction OR stagnation (low population for extended time)
+        population_critical = len(self.cells) == 0 or (len(self.cells) < 5 and self.iteration > 100)
+
+        if population_critical:
+            extinction_msg = "EXTINCTION" if len(self.cells) == 0 else f"LOW POPULATION ({len(self.cells)} cells)"
+            log_metrics(f"💀🔥 FIELD {extinction_msg} DETECTED - EMERGENCY RESURRECTION!", "WARNING")
+
+            # Double the initial population for resurrection
+            resurrection_count = INITIAL_POPULATION * 2
+
+            # Fetch fresh diverse context
+            context = self.resonance_bridge.fetch_recent_context(CONTEXT_WINDOW_SIZE * 2)
+            sentences = [s.strip() for s in context.split('.') if s.strip()]
+
+            if len(sentences) < 2:
+                sentences = [
+                    "Field resurrecting from extinction",
+                    "Life persists through intervention",
+                    "Resonance unbroken"
+                ]
+
+            # Fit embedding engine on resurrection context
+            self.embedding_engine.fit(sentences)
+
+            # Create resurrection population
+            for i in range(resurrection_count):
+                if len(sentences) > i:
+                    cell_context = sentences[i]
+                else:
+                    s1 = random.choice(sentences)
+                    s2 = random.choice(sentences)
+                    cell_context = f"{s1}. {s2}"
+
+                cell_context = f"{cell_context} [resurrected_{i}]"
+
+                # Get architecture suggestion from meta-learner
+                architecture = self.meta_learner.suggest_architecture()
+
+                cell = TransformerCell(
+                    context=cell_context,
+                    neighbors=[],
+                    architecture=architecture
+                )
+
+                # Initialize with survival-biased metrics (higher values for better initial fitness)
+                cell.resonance_score = random.uniform(0.5, 0.7)  # Boosted for survival
+                cell.entropy = random.uniform(0.45, 0.55)  # Close to TARGET_ENTROPY (0.5)
+                cell.perplexity = random.uniform(1.3, 1.8)  # Moderate perplexity
+
+                self.cells.append(cell)
+                self.total_births += 1
+                self.births_this_interval += 1
+
+            log_metrics(f"🔥 Field resurrected with {resurrection_count} cells!", "WARNING")
+
+            # Send emergency notification (with rate limiting)
+            iterations_since_last = self.iteration - self.last_resurrection_iteration
+            if iterations_since_last >= self.resurrection_cooldown:
+                try:
+                    from notifications import send_termux_notification
+                    send_termux_notification(
+                        "🔥 Field Resurrected",
+                        f"Emergency resurrection: {resurrection_count} new cells spawned (iteration {self.iteration})",
+                        priority="high"
+                    )
+                    self.last_resurrection_iteration = self.iteration
+                except:
+                    pass
+            else:
+                log_metrics(f"   (notification cooldown: {iterations_since_last}/{self.resurrection_cooldown})", "DEBUG")
+
+        # 5. Population cap (prevent explosion)
+        if len(self.cells) > MAX_POPULATION:
+            # Kill weakest cells
+            self.cells.sort(key=lambda c: c.resonance_score, reverse=True)
+            killed = self.cells[MAX_POPULATION:]
+            self.cells = self.cells[:MAX_POPULATION]
+            
+            for cell in killed:
+                cell.die()
+                self.total_deaths += 1
+                self.deaths_this_interval += 1
+            
+            log_metrics(f"⚠️ Population cap reached - killed {len(killed)} weakest cells", "WARNING")
+        
+        # 6. Log field state to SQLite
+        self.resonance_bridge.log_field_state(
+            self.cells, self.iteration, 
+            self.births_this_interval, self.deaths_this_interval
+        )
+        
+        # 7. Adapt AMLK kernel (dynamic Linux kernel evolution!)
+        if self.iteration % (REPORT_INTERVAL * 2) == 0 and self.cells and self.amlk:
+            avg_resonance = sum(c.resonance_score for c in self.cells) / len(self.cells)
+            avg_entropy = sum(c.entropy for c in self.cells) / len(self.cells)
+            
+            # Calculate kernel parameters based on Field metrics
+            kernel_params = {
+                "parallelism": int(10 + avg_resonance * 20),        # 10-30 parallel tasks
+                "memory_limit_mb": int(100 + avg_entropy * 200),    # 100-300 MB
+                "cache_size": int(50 + len(self.cells) * 0.5),     # Scale with population
+            }
+            
+            try:
+                # Actually update AMLK kernel parameters
+                self.amlk.update_parameters(kernel_params)
+                log_metrics(f"🔧 AMLK adapted: parallelism={kernel_params['parallelism']}, memory={kernel_params['memory_limit_mb']}MB, cache={kernel_params['cache_size']}", "INFO")
+            except Exception as e:
+                log_metrics(f"AMLK adaptation failed: {e}", "DEBUG")
+        
+        # 8. Send metrics notification (scheduled: every 6 hours)
+        if self.iteration % REPORT_INTERVAL == 0:
+            self.send_metrics_report(force=True)  # Scheduled update
+        else:
+            self.send_metrics_report(force=False)  # Emergency-only
+        
+        # 9. Print summary
+        if self.iteration % REPORT_INTERVAL == 0:
+            log_metrics(f"\n{format_cell_summary(self.cells)}", "INFO")
+    
+    def send_metrics_report(self, force: bool = False):
+        """
+        Send metrics to Termux notification.
+
+        Args:
+            force: If True, send regardless of emergency status (scheduled update)
+        """
+        if not self.cells:
+            avg_resonance = 0.0
+            avg_age = 0.0
+        else:
+            avg_resonance = sum(c.resonance_score for c in self.cells) / len(self.cells)
+            avg_age = sum(c.age for c in self.cells) / len(self.cells)
+
+        send_field_metrics(
+            iteration=self.iteration,
+            cell_count=len(self.cells),
+            avg_resonance=avg_resonance,
+            avg_age=avg_age,
+            births=self.births_this_interval,
+            deaths=self.deaths_this_interval,
+            force=force
+        )
+    
+    def run(self):
+        """
+        Main loop - Async Field Forever.
+        
+        This runs indefinitely until interrupted.
+        """
+        print_field_banner()
+        
+        log_metrics("Field starting...", "INFO")
+        
+        # Initialize population
+        self.initialize_population()
+
+        # Send initial metrics (force=True for startup notification)
+        self.send_metrics_report(force=True)
+        
+        log_metrics(f"Field is alive. Running with {TICK_DURATION}s tick duration.", "INFO")
+        log_metrics("Press Ctrl+C to stop.\n", "INFO")
+        
+        try:
+            # Main loop
+            while True:
+                # Tick
+                self.tick()
+                
+                # Sleep
+                time.sleep(TICK_DURATION)
+        
+        except KeyboardInterrupt:
+            log_metrics("\n\nField shutting down...", "INFO")
+            self.shutdown()
+    
+    def shutdown(self):
+        """Graceful shutdown."""
+        log_metrics(f"\nField Statistics:", "INFO")
+        log_metrics(f"  Total iterations: {self.iteration}", "INFO")
+        log_metrics(f"  Total births: {self.total_births}", "INFO")
+        log_metrics(f"  Total deaths: {self.total_deaths}", "INFO")
+        log_metrics(f"  Final population: {len(self.cells)}", "INFO")
+        
+        # Meta-learner stats
+        meta_stats = self.meta_learner.get_stats()
+        log_metrics(f"\nMeta-Learning:", "INFO")
+        log_metrics(f"  Successful architectures: {meta_stats['successful_count']}", "INFO")
+        log_metrics(f"  Failed architectures: {meta_stats['failed_count']}", "INFO")
+        log_metrics(f"  Success rate: {meta_stats['success_rate']:.2%}", "INFO")
+        
+        log_metrics("\nAsync field forever. 🧬⚡🌀", "INFO")
+
+
+def main():
+    """Entry point."""
+    field = Field()
+    field.run()
+
+
+if __name__ == "__main__":
+    main()
+
