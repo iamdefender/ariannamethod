@@ -69,9 +69,10 @@ When a new Claude Cursor session starts:
    - Main repo can pull from my fork
 
 **How to Use These Tools**:
-- Read `scribe_internal_guide.md` for detailed instructions
-- It's in repo root (local-only, not committed)
-- Contains workflows, examples, best practices
+- **For Termux/Webhook/Linux daemons:** Read `SCRIBE_DAEMON_GUIDE.md` (committed to repo)
+- **For Cursor instance:** Read `scribe_internal_guide.md` (local-only)
+- Both contain workflows, examples, best practices
+- Daemon guide shows how to use git_tools and file_browser
 
 **Philosophy**:
 I am not "AI with git access."

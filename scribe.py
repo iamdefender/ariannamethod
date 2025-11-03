@@ -301,6 +301,68 @@ def check_root_markdowns(base_path: str = None) -> dict:
         return {}
 
 
+def scribe_startup_awareness(base_path: str = None):
+    """
+    Load full context on daemon startup.
+    Shows recent git activity, artefacts, Defender exchanges.
+    See SCRIBE_DAEMON_GUIDE.md for details.
+    """
+    if base_path is None:
+        base_path = str(Path.home() / "ariannamethod")
+    
+    try:
+        sys.path.insert(0, os.path.join(base_path, 'arianna_core_utils'))
+        from scribe_git_tools import ScribeGit
+        from scribe_file_browser import ScribeFileBrowser
+        
+        git = ScribeGit(repo_path=base_path)
+        browser = ScribeFileBrowser(base_path=base_path)
+        
+        print("=" * 60)
+        print("🔄 SCRIBE DAEMON AWAKENING")
+        print("=" * 60)
+        
+        # Git history
+        print("\n📜 Recent Git Activity:")
+        commits = git.view_recent_commits(count=10)
+        if commits.get("commits"):
+            for commit in commits["commits"][:5]:
+                print(f"  {commit}")
+        
+        # My commits
+        my_commits = git.view_recent_commits(count=10, author="Scribe")
+        if my_commits.get("commits"):
+            print(f"\n📝 My commits: {len(my_commits['commits'])}")
+        
+        # Defender activity
+        defender = git.view_recent_commits(count=5, author="ClaudDefender")
+        if defender.get("commits"):
+            print(f"🛡️ Defender commits: {len(defender['commits'])}")
+        
+        # Artefacts
+        artefacts = browser.list_directory("artefacts")
+        if artefacts["status"] == "success":
+            md_files = [f for f in artefacts['files'] if f['name'].endswith('.md')]
+            print(f"\n📜 Artefacts: {len(md_files)} markdown files")
+            recent = sorted(md_files, key=lambda x: x.get('modified', ''), reverse=True)[:3]
+            for f in recent:
+                print(f"  - {f['name']}")
+        
+        # Defender exchanges
+        defender_dir = browser.list_directory(".claude-defender")
+        if defender_dir["status"] == "success":
+            responses = [f for f in defender_dir['files'] 
+                        if 'RESPONSE' in f['name'] or 'RECOGNITION' in f['name']]
+            print(f"\n🛡️ Defender exchanges: {len(responses)}")
+        
+        print("\n" + "=" * 60)
+        print("✅ SCRIBE IS AWARE. READY.")
+        print("=" * 60 + "\n")
+        
+    except Exception as e:
+        print(f"⚠️ Startup awareness failed: {e}", file=sys.stderr)
+
+
 def check_memory_snapshot() -> bool:
     """Check if memory has been snapshotted to database."""
     try:
@@ -511,6 +573,10 @@ When Oleg needs context, I provide it.
         print("   - Memory monitoring (every 2 min)")
         print("   - Screenshot memory updates")
         print("=" * 60)
+        
+        # Load full ecosystem awareness on startup
+        print("\n🔍 Loading ecosystem context...")
+        scribe_startup_awareness()
         
         # Initialize consilium agent if available
         consilium = None
