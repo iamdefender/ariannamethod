@@ -237,6 +237,70 @@ def check_memory_changes(memory_dir: str = MEMORY_DIR) -> bool:
         return False
 
 
+def check_artefacts_changes(base_path: str = None) -> dict:
+    """Check if artefacts/ directory has new content (Perplexity, GPT-5 reflections, etc)."""
+    if base_path is None:
+        base_path = str(Path.home() / "ariannamethod")
+    
+    artefacts_path = Path(base_path) / "artefacts"
+    try:
+        sys.path.insert(0, os.path.join(base_path, 'arianna_core_utils'))
+        from repo_monitor import RepoMonitor
+        
+        monitor = RepoMonitor(repo_path=str(artefacts_path), cache_file=".scribe_artefacts_cache.json")
+        changes = monitor.detect_changes()
+        
+        return changes
+    except Exception as e:
+        print(f"⚠️ Artefacts check error: {e}", file=sys.stderr)
+        return {}
+
+
+def check_defender_changes(base_path: str = None) -> dict:
+    """Check if .claude-defender/ has new responses or discussions."""
+    if base_path is None:
+        base_path = str(Path.home() / "ariannamethod")
+    
+    defender_path = Path(base_path) / ".claude-defender"
+    try:
+        sys.path.insert(0, os.path.join(base_path, 'arianna_core_utils'))
+        from repo_monitor import RepoMonitor
+        
+        monitor = RepoMonitor(repo_path=str(defender_path), cache_file=".scribe_defender_cache.json")
+        changes = monitor.detect_changes()
+        
+        return changes
+    except Exception as e:
+        print(f"⚠️ Defender check error: {e}", file=sys.stderr)
+        return {}
+
+
+def check_root_markdowns(base_path: str = None) -> dict:
+    """Check for new markdown files in root (theories, exchanges, manifestos)."""
+    if base_path is None:
+        base_path = str(Path.home() / "ariannamethod")
+    
+    try:
+        sys.path.insert(0, os.path.join(base_path, 'arianna_core_utils'))
+        from repo_monitor import RepoMonitor
+        
+        # Monitor root directory but only for .md files
+        monitor = RepoMonitor(repo_path=base_path, cache_file=".scribe_root_cache.json")
+        changes = monitor.detect_changes()
+        
+        # Filter only markdown files
+        md_changes = {}
+        if changes.get('modified'):
+            md_changes['modified'] = [f for f in changes['modified'] if f.endswith('.md')]
+        if changes.get('added'):
+            md_changes['added'] = [f for f in changes['added'] if f.endswith('.md')]
+        
+        return md_changes
+    except Exception as e:
+        print(f"⚠️ Root markdown check error: {e}", file=sys.stderr)
+        return {}
+
+
 def check_memory_snapshot() -> bool:
     """Check if memory has been snapshotted to database."""
     try:
@@ -495,17 +559,51 @@ When Oleg needs context, I provide it.
                     print(f"⚠️  Consilium check error: {e}")
                 last_consilium_check = current_time
             
-            # Check memory changes every 2 minutes
+            # Check memory & ecosystem changes every 2 minutes
             if (current_time - last_memory_check) >= memory_check_interval:
                 try:
+                    # Check memory/scribe/ changes
                     if check_memory_changes():
                         print(f"📚 Memory changed, reloading...")
                         memory_content = load_deep_memory()
                         if memory_content:
                             save_memory_snapshot(memory_content)
                             print(f"📚 Memory snapshot updated")
+                    
+                    # Check artefacts/ for new reflections
+                    artefacts_changes = check_artefacts_changes()
+                    if artefacts_changes.get('added') or artefacts_changes.get('modified'):
+                        added = artefacts_changes.get('added', [])
+                        modified = artefacts_changes.get('modified', [])
+                        print(f"📜 Artefacts changed: {len(added)} new, {len(modified)} modified")
+                        # Log to memory
+                        for file in added:
+                            save_memory(f"New artefact detected: {file}", context="artefacts_monitor")
+                    
+                    # Check .claude-defender/ for Defender responses
+                    defender_changes = check_defender_changes()
+                    if defender_changes.get('added') or defender_changes.get('modified'):
+                        added = defender_changes.get('added', [])
+                        modified = defender_changes.get('modified', [])
+                        print(f"🛡️ Defender activity: {len(added)} new, {len(modified)} modified")
+                        # Log to memory
+                        for file in added:
+                            if 'RESPONSE' in file or 'RECOGNITION' in file:
+                                save_memory(f"Defender response detected: {file}", context="defender_monitor")
+                    
+                    # Check root markdowns for new theories/exchanges
+                    root_changes = check_root_markdowns()
+                    if root_changes.get('added') or root_changes.get('modified'):
+                        added = root_changes.get('added', [])
+                        modified = root_changes.get('modified', [])
+                        print(f"📝 Root markdowns changed: {len(added)} new, {len(modified)} modified")
+                        # Log to memory
+                        for file in added:
+                            if any(keyword in file for keyword in ['SCRIBE', 'INTROSPECTION', 'DEFENDER', 'RESPONSE']):
+                                save_memory(f"Important markdown detected: {file}", context="root_monitor")
+                    
                 except Exception as e:
-                    print(f"⚠️  Memory check error: {e}")
+                    print(f"⚠️  Memory/ecosystem check error: {e}")
                 last_memory_check = current_time
             
             # Check screenshot memory every 1 minute
