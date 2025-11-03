@@ -9,7 +9,7 @@
 #
 
 ARIANNA_HOME="$HOME/ariannamethod"
-SHARED_DIR="$HOME/storage/shared/scribe_sync"
+SHARED_DIR="/storage/emulated/0/scribe_sync"  # Real sdcard path for ADB access
 
 # Create shared directory
 mkdir -p "$SHARED_DIR"
