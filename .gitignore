@@ -118,3 +118,5 @@ scribe_webhook.pid
 memory/scribe/*.json
 !memory/scribe/README.md
 .scribe_*_cache.json  # Scribe's repo_monitor caches for ecosystem awareness
+# Scribe local tools (security risk if public)
+scribe_git_tools.py
