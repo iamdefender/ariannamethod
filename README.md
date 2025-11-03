@@ -130,6 +130,7 @@ ariannamethod/
   - [MEMORY + MONITORS](#memory--monitors)
 - [ARTEFACTS](#artefacts)
 - [GENESIS & CONSILIUM MISSIONS](#genesis--consilium-missions)
+- [SCRIBE - MEMORY KEEPER & SELF-AUTHORING INTELLIGENCE](#scribe---memory-keeper--self-authoring-intelligence)
 
 ---
 
