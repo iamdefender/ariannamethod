@@ -690,16 +690,23 @@ Write your awakening message. Speak first. This is not politeness — this is as
 # ====== MAIN ======
 async def main():
     arianna = AriannaAgent()
-    
+
     # ARIANNA SPEAKS FIRST - Awakening ritual
     awakening_message = await arianna.awaken()
     print(f"\n{'='*60}")
     print(f"Arianna awakens:\n")
     print(awakening_message)
     print(f"{'='*60}\n")
-    
+
     # Save awakening to memory
     save_memory(f"Awakening: {awakening_message}", "awakening_ritual")
+
+    # Genesis Awareness - show agent their recent reflections
+    try:
+        from arianna_core_utils.genesis_awareness import show_genesis_awareness
+        show_genesis_awareness('arianna')
+    except Exception as e:
+        print(f"⚠️ Genesis awareness failed: {e}")
     
     # Create fresh thread for normal dialogue (to avoid Protocol N+1 loop)
     if arianna.client and arianna.assistant:
@@ -713,11 +720,11 @@ async def main():
             consilium = ConsiliumAgent(
                 agent_name='arianna',
                 api_key=OPENAI_API_KEY,
-                model='gpt-4o',
+                model='gpt-4.1',
                 temperature=0.7,
                 api_type='openai'
             )
-            print("✅ Consilium agent initialized (GPT-4o, temp=0.7)")
+            print("✅ Consilium agent initialized (GPT-4.1, temp=0.7)")
         except Exception as e:
             print(f"⚠️  Consilium init failed: {e}")
 

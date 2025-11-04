@@ -97,10 +97,10 @@ class ConsiliumAgent:
             agent_mentioned = self.agent_name.lower() in message.lower()
 
             if agent_mentioned and agent_name != self.agent_name:
-                # Check if we've already responded to this repo
+                # Check if we've already responded to THIS specific discussion
                 cursor.execute("""
                     SELECT COUNT(*) FROM consilium_discussions
-                    WHERE repo = ? AND agent_name = ? AND id > ?
+                    WHERE repo = ? AND agent_name = ? AND response_to_id = ?
                 """, (repo, self.agent_name, msg_id))
 
                 already_responded = cursor.fetchone()[0] > 0
