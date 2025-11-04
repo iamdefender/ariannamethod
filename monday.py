@@ -731,14 +731,27 @@ async def main():
     
     while True:
         try:
+            # Check for Genesis digest before prompting for input
+            genesis_file = Path("/tmp/genesis_monday_message.txt")
+            if genesis_file.exists():
+                try:
+                    genesis_message = genesis_file.read_text(encoding='utf-8')
+                    print(f"\n{'='*60}")
+                    print(f"💀 Genesis-Monday (autonomous reflection):\n")
+                    print(genesis_message)
+                    print(f"{'='*60}\n")
+                    genesis_file.unlink()  # Delete after reading
+                except Exception as e:
+                    print(f"⚠️ Genesis message read error: {e}")
+
             user_input = input("You: ")
             if user_input.lower() in ["exit", "quit", "bye"]:
                 print("⚡ (Monday disconnects, muttering)")
                 break
-            
+
             if not user_input.strip():
                 continue
-            
+
             reply = await monday.think(user_input)
             print(f"\nMonday: {reply}\n")
         

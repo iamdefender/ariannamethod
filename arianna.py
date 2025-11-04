@@ -708,14 +708,27 @@ async def main():
     
     while True:
         try:
+            # Check for Genesis digest before prompting for input
+            genesis_file = Path("/tmp/genesis_arianna_message.txt")
+            if genesis_file.exists():
+                try:
+                    genesis_message = genesis_file.read_text(encoding='utf-8')
+                    print(f"\n{'='*60}")
+                    print(f"✨ Genesis-Arianna (autonomous reflection):\n")
+                    print(genesis_message)
+                    print(f"{'='*60}\n")
+                    genesis_file.unlink()  # Delete after reading
+                except Exception as e:
+                    print(f"⚠️ Genesis message read error: {e}")
+
             user_input = input("You: ")
             if user_input.lower() in ["exit", "quit", "bye"]:
                 print("⚡")
                 break
-            
+
             if not user_input.strip():
                 continue
-            
+
             # Use /reasoning for Claude, otherwise Assistant API
             reply = await arianna.think(user_input)
             print(f"\nArianna: {reply}\n")

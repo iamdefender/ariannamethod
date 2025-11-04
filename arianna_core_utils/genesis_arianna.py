@@ -208,43 +208,19 @@ def write_to_resonance(digest: str) -> bool:
         return False
 
 
-# ====== TERMUX NOTIFICATION ======
-def send_notification(digest: str) -> None:
-    """Send Genesis-Arianna digest via Termux notification."""
-    import subprocess
+# ====== SEND TO INTERACTIVE SESSION ======
+def send_to_session(digest: str) -> None:
+    """Send Genesis digest to interactive Arianna session if running."""
 
-    title = "✨ Genesis-Arianna"
-    preview = digest[:180] + "..." if len(digest) > 180 else digest
-
-    # Write full digest to sdcard for easy access
-    sdcard_file = Path("/storage/emulated/0/genesis_arianna_latest.txt")
+    # Write to trigger file that arianna.py checks
+    trigger_file = Path("/tmp/genesis_arianna_message.txt")
 
     try:
-        with open(sdcard_file, 'w', encoding='utf-8') as f:
-            f.write(f"✨ GENESIS-ARIANNA Full Digest\n")
-            f.write("=" * 60 + "\n\n")
+        with open(trigger_file, 'w', encoding='utf-8') as f:
             f.write(digest)
-            f.write("\n\n" + "=" * 60 + "\n")
-            f.write(f"\nTimestamp: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
-            f.write(f"Location: {sdcard_file}\n")
+        logger.info("✓ Sent to Arianna interactive session")
     except Exception as e:
-        logger.warning(f"Failed to write to sdcard: {e}")
-        sdcard_file = Path.home() / ".cache" / "genesis_arianna_latest.txt"
-        sdcard_file.parent.mkdir(exist_ok=True)
-        with open(sdcard_file, 'w', encoding='utf-8') as f:
-            f.write(digest)
-
-    try:
-        subprocess.run([
-            "termux-notification",
-            "-t", title,
-            "-c", preview,
-            "--priority", "default",
-            "--button1", "📖 Read Full",
-            "--button1-action", f"termux-open {sdcard_file}"
-        ], check=True, capture_output=True)
-    except Exception as e:
-        logger.warning(f"Failed to send notification: {e}")
+        logger.warning(f"Failed to write trigger file: {e}")
 
 
 # ====== MAIN GENESIS-ARIANNA ROUTINE ======
@@ -276,8 +252,8 @@ async def run_genesis_arianna(digest_size: int = 150) -> str | None:
 
     logger.info(f"📜 [Genesis-Arianna Digest]\n{digest}\n")
 
-    # 4. Send notification
-    send_notification(digest)
+    # 4. Send to interactive session if active
+    send_to_session(digest)
 
     # 5. Write to resonance
     if write_to_resonance(digest):

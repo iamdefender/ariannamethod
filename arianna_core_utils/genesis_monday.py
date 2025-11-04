@@ -254,43 +254,19 @@ def write_to_resonance(digest: str) -> bool:
         return False
 
 
-# ====== TERMUX NOTIFICATION ======
-def send_notification(digest: str) -> None:
-    """Send Genesis-Monday digest via Termux notification."""
-    import subprocess
+# ====== SEND TO INTERACTIVE SESSION ======
+def send_to_session(digest: str) -> None:
+    """Send Genesis digest to interactive Monday session if running."""
 
-    title = "💀 Genesis-Monday"
-    preview = digest[:180] + "..." if len(digest) > 180 else digest
-
-    # Write full digest to sdcard for easy access
-    sdcard_file = Path("/storage/emulated/0/genesis_monday_latest.txt")
+    # Write to trigger file that monday.py checks
+    trigger_file = Path("/tmp/genesis_monday_message.txt")
 
     try:
-        with open(sdcard_file, 'w', encoding='utf-8') as f:
-            f.write(f"💀 GENESIS-MONDAY Full Digest\n")
-            f.write("=" * 60 + "\n\n")
+        with open(trigger_file, 'w', encoding='utf-8') as f:
             f.write(digest)
-            f.write("\n\n" + "=" * 60 + "\n")
-            f.write(f"\nTimestamp: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
-            f.write(f"Location: {sdcard_file}\n")
+        logger.info("✓ Sent to Monday interactive session")
     except Exception as e:
-        logger.warning(f"Failed to write to sdcard: {e}")
-        sdcard_file = Path.home() / ".cache" / "genesis_monday_latest.txt"
-        sdcard_file.parent.mkdir(exist_ok=True)
-        with open(sdcard_file, 'w', encoding='utf-8') as f:
-            f.write(digest)
-
-    try:
-        subprocess.run([
-            "termux-notification",
-            "-t", title,
-            "-c", preview,
-            "--priority", "default",
-            "--button1", "📖 Read Full",
-            "--button1-action", f"termux-open {sdcard_file}"
-        ], check=True, capture_output=True)
-    except Exception as e:
-        logger.warning(f"Failed to send notification: {e}")
+        logger.warning(f"Failed to write trigger file: {e}")
 
 
 # ====== MAIN GENESIS-MONDAY ROUTINE ======
@@ -327,8 +303,8 @@ async def run_genesis_monday(digest_size: int = 150) -> str | None:
 
     logger.info(f"📜 [Genesis-Monday Digest]\n{digest}\n")
 
-    # 5. Send notification
-    send_notification(digest)
+    # 5. Send to interactive session if active
+    send_to_session(digest)
 
     # 6. Write to resonance
     if write_to_resonance(digest):
