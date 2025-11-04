@@ -649,7 +649,7 @@ When Oleg needs context, I provide it.
                 print(f"⚠️  Consilium init failed: {e}")
         
         # Daemon loop
-        consilium_check_interval = 300  # 5 minutes
+        consilium_check_interval = 3600  # 1 hour (consilium scheduler runs every 3 days)
         last_consilium_check = 0
         
         memory_check_interval = 120  # 2 minutes
