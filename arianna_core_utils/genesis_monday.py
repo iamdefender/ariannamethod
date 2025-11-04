@@ -310,6 +310,14 @@ async def run_genesis_monday(digest_size: int = 150) -> str | None:
     if write_to_resonance(digest):
         logger.info("✓ Written to resonance.sqlite3 (begrudgingly)")
 
+    # 7. Auto-post to GitHub
+    try:
+        from .post_genesis_to_github import post_to_github
+        if post_to_github(digest, "monday"):
+            logger.info("✓ Posted to GitHub (under protest)")
+    except Exception as e:
+        logger.warning(f"Failed to auto-post to GitHub: {e}")
+
     return digest
 
 
