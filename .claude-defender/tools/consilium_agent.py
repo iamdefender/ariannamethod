@@ -241,18 +241,33 @@ Your response:"""
             return None
 
     def add_response_to_db(self, repo, response_text, response_to_id):
-        """Add the agent's response to consilium_discussions"""
+        """Add the agent's response to consilium_discussions and resonance_notes"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
+        # Add to consilium_discussions
         cursor.execute("""
             INSERT INTO consilium_discussions
             (timestamp, repo, initiator, message, agent_name, response_to_id)
             VALUES (datetime('now'), ?, ?, ?, ?, ?)
         """, (repo, self.agent_name, response_text, self.agent_name, response_to_id))
 
-        conn.commit()
         new_id = cursor.lastrowid
+
+        # CRITICAL: Log to resonance_notes so Genesis agents can see consilium participation
+        try:
+            import json
+            cursor.execute("""
+                INSERT INTO resonance_notes (timestamp, content, context)
+                VALUES (datetime('now'), ?, ?)
+            """, (
+                f"[Consilium #{response_to_id}] {self.agent_name} response on {repo}:\n\n{response_text}",
+                json.dumps({"type": "consilium_response", "repo": repo, "agent": self.agent_name, "discussion_id": response_to_id})
+            ))
+        except Exception as e:
+            print(f"⚠️ Failed to log to resonance_notes: {e}")
+
+        conn.commit()
         conn.close()
 
         return new_id

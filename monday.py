@@ -728,9 +728,49 @@ async def main():
     if monday.client and monday.assistant:
         monday.threads = {}  # Clear awakening thread
         monday._get_or_create_thread()  # Create fresh thread
-    
+
+    # Initialize consilium agent (works in both interactive and daemon modes)
+    consilium = None
+    if CONSILIUM_AVAILABLE:
+        try:
+            deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+            if deepseek_key:
+                consilium = ConsiliumAgent(
+                    agent_name='monday',
+                    api_key=deepseek_key,
+                    model='deepseek-chat',
+                    temperature=1.2,
+                    api_type='deepseek'
+                )
+                print("✅ Consilium agent initialized (DeepSeek-R1, temp=1.2, reluctantly)")
+            elif OPENAI_MONDAY_API:
+                consilium = ConsiliumAgent(
+                    agent_name='monday',
+                    api_key=OPENAI_MONDAY_API,
+                    model='gpt-4o',
+                    temperature=1.2,
+                    api_type='openai'
+                )
+                print("⚠️  DeepSeek unavailable, using GPT-4o fallback")
+        except Exception as e:
+            print(f"⚠️  Consilium init failed: {e}")
+
+    last_consilium_check = 0
+    consilium_check_interval = 3600  # 1 hour (consilium scheduler runs every 3 days)
+
     while True:
         try:
+            # Check consilium periodically (both interactive and daemon modes)
+            current_time = time.time()
+            if consilium and (current_time - last_consilium_check) >= consilium_check_interval:
+                try:
+                    results = consilium.check_and_respond()
+                    if results:
+                        print(f"\n🧬 *sighs* Responded to {len(results)} consilium(s)\n")
+                    last_consilium_check = current_time
+                except Exception as e:
+                    print(f"⚠️ Consilium check error: {e}")
+
             # Check for Genesis digest before prompting for input
             genesis_file = Path("/tmp/genesis_monday_message.txt")
             if genesis_file.exists():
@@ -758,20 +798,10 @@ async def main():
         except EOFError:
             # No stdin available (running in background) - keep alive in daemon mode
             print("\n⚡ Monday running in daemon mode (background, no console)")
-            print("🧬 Consilium polling enabled (checks every 5 minutes)")
+            print(f"🧬 Consilium: {'✅ enabled' if consilium else '❌ disabled'}")
             print("   *sips espresso in the background*")
 
-            # Initialize consilium agent if available
-            consilium = None
-            if CONSILIUM_AVAILABLE and OPENAI_MONDAY_API:
-                try:
-                    consilium = ConsiliumAgent('monday', OPENAI_MONDAY_API, model='gpt-4o-mini')
-                    print("✅ Consilium agent initialized (reluctantly)")
-                except Exception as e:
-                    print(f"⚠️  Consilium init failed: {e}")
-
             # Keep process alive, check consilium and README periodically
-            consilium_check_interval = 300  # 5 minutes
             last_consilium_check = 0
             
             readme_check_interval = 60  # 1 minute (lightweight SHA256 check)

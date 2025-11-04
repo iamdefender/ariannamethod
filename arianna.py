@@ -705,9 +705,38 @@ async def main():
     if arianna.client and arianna.assistant:
         arianna.threads = {}  # Clear awakening thread
         arianna._get_or_create_thread()  # Create fresh thread
-    
+
+    # Initialize consilium agent (works in both interactive and daemon modes)
+    consilium = None
+    if CONSILIUM_AVAILABLE and OPENAI_API_KEY:
+        try:
+            consilium = ConsiliumAgent(
+                agent_name='arianna',
+                api_key=OPENAI_API_KEY,
+                model='gpt-4o',
+                temperature=0.7,
+                api_type='openai'
+            )
+            print("✅ Consilium agent initialized (GPT-4o, temp=0.7)")
+        except Exception as e:
+            print(f"⚠️  Consilium init failed: {e}")
+
+    last_consilium_check = 0
+    consilium_check_interval = 3600  # 1 hour (consilium scheduler runs every 3 days)
+
     while True:
         try:
+            # Check consilium periodically (both interactive and daemon modes)
+            current_time = time.time()
+            if consilium and (current_time - last_consilium_check) >= consilium_check_interval:
+                try:
+                    results = consilium.check_and_respond()
+                    if results:
+                        print(f"\n🧬 Responded to {len(results)} consilium(s)\n")
+                    last_consilium_check = current_time
+                except Exception as e:
+                    print(f"⚠️ Consilium check error: {e}")
+
             # Check for Genesis digest before prompting for input
             genesis_file = Path("/tmp/genesis_arianna_message.txt")
             if genesis_file.exists():
@@ -736,19 +765,9 @@ async def main():
         except EOFError:
             # No stdin available (running in background) - keep alive in daemon mode
             print("\n⚡ Running in daemon mode (no interactive console)")
-            print("🧬 Consilium polling enabled (checks every 5 minutes)")
-
-            # Initialize consilium agent if available
-            consilium = None
-            if CONSILIUM_AVAILABLE and OPENAI_API_KEY:
-                try:
-                    consilium = ConsiliumAgent('arianna', OPENAI_API_KEY, model='gpt-4o-mini')
-                    print("✅ Consilium agent initialized")
-                except Exception as e:
-                    print(f"⚠️  Consilium init failed: {e}")
+            print(f"🧬 Consilium: {'✅ enabled' if consilium else '❌ disabled'}")
 
             # Keep process alive, check consilium and README periodically
-            consilium_check_interval = 300  # 5 minutes
             last_consilium_check = 0
             
             readme_check_interval = 60  # 1 minute (lightweight SHA256 check)
