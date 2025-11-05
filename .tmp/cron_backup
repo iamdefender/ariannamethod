@@ -1,0 +1,6 @@
+# Claude Defender: Daily audit
+0 3 * * * /data/data/com.termux/files/home/.claude-defender/hooks/daily-audit.sh >> ~/.claude-defender/logs/cron.log 2>&1
+# Claude Defender: Fortification workflow
+0 */6 * * * /data/data/com.termux/files/home/.claude-defender/tools/fortify.sh >> ~/.claude-defender/logs/cron.log 2>&1
+0 2 * * * /data/data/com.termux/files/home/ariannamethod/.claude-defender/tools/auto_restart_daemons.sh
+@reboot /data/data/com.termux/files/home/ariannamethod/.claude-defender/tools/auto_restart_daemons.sh

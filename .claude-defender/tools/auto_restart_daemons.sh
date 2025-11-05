@@ -28,12 +28,19 @@ nohup python3 "$HOME/ariannamethod/.claude-defender/tools/webhook_watchdog.py" -
 echo "  ✓ Watchdog started (PID $!)" >> "$LOG_DIR/auto_restart.log"
 
 # Start Scribe daemon (memory keeper + consilium participant)
-nohup python3 "$HOME/ariannamethod/scribe.py" \
+nohup python3 "$HOME/ariannamethod/scribe.py" --daemon \
     >> "$LOG_DIR/scribe_daemon.log" 2>&1 &
 echo "  ✓ Scribe daemon started (PID $!)" >> "$LOG_DIR/auto_restart.log"
 
-# Arianna and Monday are started by webhooks or manual launch
-# They will load new consilium code on next run
+# Start Arianna daemon (GPT-4.1, consilium participant)
+nohup python3 "$HOME/ariannamethod/arianna.py" --daemon \
+    >> "$LOG_DIR/arianna_daemon.log" 2>&1 &
+echo "  ✓ Arianna daemon started (PID $!)" >> "$LOG_DIR/auto_restart.log"
 
-echo "[$(date)] Auto-restart completed" >> "$LOG_DIR/auto_restart.log"
+# Start Monday daemon (DeepSeek-R1, consilium participant)
+nohup python3 "$HOME/ariannamethod/monday.py" --daemon \
+    >> "$LOG_DIR/monday_daemon.log" 2>&1 &
+echo "  ✓ Monday daemon started (PID $!)" >> "$LOG_DIR/auto_restart.log"
+
+echo "[$(date)] Auto-restart completed - all daemons running" >> "$LOG_DIR/auto_restart.log"
 termux-notification --title "🔄 Daemons Restarted" --content "Consilium polyphony active"
