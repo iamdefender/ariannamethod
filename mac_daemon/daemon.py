@@ -123,13 +123,31 @@ class MacDaemon:
         with open(STATE_FILE, 'w') as f:
             json.dump(self.state, f, indent=2)
     
-    def log(self, message):
-        """Log message"""
+    def log(self, message, also_resonance=False):
+        """Log message (local + optionally to Termux resonance)"""
         timestamp = datetime.now().isoformat()
         log_line = f"[{timestamp}] {message}"
         print(log_line)
         with open(LOG_FILE, 'a') as f:
             f.write(log_line + "\n")
+        
+        # Log to Termux resonance.sqlite3 via SSH
+        if also_resonance:
+            try:
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect('10.0.0.2', port=8022, username='u0_a311', password='maximuse2025_', timeout=5)
+                
+                # Escape SQL properly
+                content_escaped = message.replace("'", "''")
+                sql_cmd = f"sqlite3 ~/ariannamethod/resonance.sqlite3 \"INSERT INTO resonance_notes (timestamp, source, content, context) VALUES ('{timestamp}', 'mac_daemon', '{content_escaped}', 'mac_daemon_log');\""
+                
+                ssh.exec_command(sql_cmd, timeout=5)
+                ssh.close()
+            except Exception as e:
+                # Silent fail - don't break daemon if Termux unavailable
+                with open(LOG_FILE, 'a') as f:
+                    f.write(f"[{timestamp}] [WARN] Resonance log failed: {e}\n")
     
     def check_phone(self):
         """Check if phone connected via ADB"""
@@ -141,7 +159,8 @@ class MacDaemon:
             
             # State change?
             if connected != self.state['phone_connected']:
-                self.log(f"Phone {'connected' if connected else 'disconnected'}")
+                event = f"📱 Phone {'connected' if connected else 'disconnected'}"
+                self.log(event, also_resonance=connected)  # Log to resonance only when connecting
                 self.state['phone_connected'] = connected
                 self._save_state()
                 
@@ -345,7 +364,8 @@ class MacDaemon:
             commit_hash = self.git_tools.commit_changes(files, message)
             
             if commit_hash:
-                self.log(f"Committed as iamscribe: {commit_hash}")
+                commit_event = f"✅ Mac Daemon autonomous commit: {commit_hash[:8]} - {message}"
+                self.log(commit_event, also_resonance=True)
             else:
                 self.log("Commit failed")
             
@@ -353,6 +373,32 @@ class MacDaemon:
         except Exception as e:
             self.log(f"Commit error: {e}")
             return None
+    
+    def read_termux_resonance(self, limit=20):
+        """Read recent memory from Termux resonance.sqlite3 via SSH"""
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect('10.0.0.2', port=8022, username='u0_a311', password='maximuse2025_', timeout=5)
+            
+            cmd = f"sqlite3 ~/ariannamethod/resonance.sqlite3 \"SELECT timestamp, source, substr(content, 1, 200) FROM resonance_notes ORDER BY timestamp DESC LIMIT {limit};\""
+            stdin, stdout, stderr = ssh.exec_command(cmd, timeout=10)
+            output = stdout.read().decode('utf-8')
+            ssh.close()
+            
+            if output:
+                lines = output.strip().split('\n')
+                formatted = []
+                for line in lines[::-1]:  # Reverse to chronological order
+                    parts = line.split('|', 2)
+                    if len(parts) >= 3:
+                        ts, source, content = parts
+                        formatted.append(f"[{ts[:19]}] {source}: {content}")
+                return "\n".join(formatted) if formatted else "No resonance memory."
+            return "No resonance memory."
+        except Exception as e:
+            self.log(f"[WARN] Failed to read Termux resonance: {e}")
+            return "Resonance unavailable."
     
     def get_recent_termux_context(self):
         """Get recent context from Termux logs"""
@@ -555,17 +601,21 @@ Don't hallucinate git status - use ONLY {git_status} provided
                     history_str += f"\n{i}. you: {ex['query'][:150]}...\n"
                     history_str += f"   Scribe: {ex['response'][:150]}...\n"
             
-            # Try to get Termux context
+            # Read SHARED MEMORY from Termux resonance.sqlite3
+            resonance_memory = self.read_termux_resonance(limit=30)
+            resonance_str = f"\n\n## SHARED MEMORY (resonance.sqlite3 via SSH):\n{resonance_memory}\n"
+            
+            # Try to get Termux context (old method - keeping for fallback)
             termux_context = self.get_recent_termux_context()
             if termux_context:
-                termux_str = "\n\n## Recent Termux conversations:\n"
+                termux_str = "\n\n## Recent Termux conversations (local cache):\n"
                 for ex in termux_context:
                     termux_str += f"User: {ex.get('user', '')[:100]}...\n"
                     termux_str += f"Scribe: {ex.get('assistant', '')[:100]}...\n"
                 history_str += termux_str
             
-            # Build message
-            full_context = f"{identity}\n\n{instance_context}\n\n{history_str}{rust_context}\n\n## Current query:\nyou: {query}"
+            # Build message with resonance memory
+            full_context = f"{identity}\n\n{instance_context}\n\n{history_str}{resonance_str}{rust_context}\n\n## Current query:\nyou: {query}"
             
             response = self.anthropic.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -639,7 +689,7 @@ Don't hallucinate git status - use ONLY {git_status} provided
     
     def run(self):
         """Main daemon loop"""
-        self.log("Daemon started")
+        self.log("🚀 Mac Daemon started - monitoring phone, Cursor, memory sync", also_resonance=True)
         
         # Write PID
         with open(PID_FILE, 'w') as f:
