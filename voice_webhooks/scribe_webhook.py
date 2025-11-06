@@ -42,7 +42,8 @@ client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 def log_to_resonance(source, content, context="scribe_conversation"):
     """Log message to resonance.sqlite3"""
     try:
-        conn = sqlite3.connect(str(DB_PATH))
+        print(f"[DEBUG] Logging to resonance: DB={DB_PATH}, source={source}")
+        conn = sqlite3.connect(str(DB_PATH), timeout=10)
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO resonance_notes (timestamp, source, content, context)
@@ -50,8 +51,11 @@ def log_to_resonance(source, content, context="scribe_conversation"):
         """, (datetime.now().isoformat(), source, content, context))
         conn.commit()
         conn.close()
+        print(f"[DEBUG] Successfully logged to resonance")
     except Exception as e:
+        import traceback
         print(f"[ERROR] Failed to log to resonance: {e}")
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
 
 def get_conversation_history(limit=20):
     """Retrieve recent conversation history from memory"""
