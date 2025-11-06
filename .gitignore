@@ -126,3 +126,7 @@ mac_daemon/git_tools.py
 mac_daemon/job_queue.py
 mac_daemon/.DS_Store
 mac_daemon/__pycache__/
+
+# Scribe cache files
+.scribe_*_cache.json
+*/.scribe_*_cache.json
