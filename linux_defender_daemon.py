@@ -44,6 +44,7 @@ except ImportError:
 try:
     from linux_defender.core.session_manager import SessionManager, SessionState
     from linux_defender.integrations.termux_bridge import TermuxBridge
+    from linux_defender.monitoring.notification_service import create_notification_service
 except ImportError as e:
     print(f"❌ Linux Defender modules not found: {e}", file=sys.stderr)
     print("Ensure linux_defender/ directory exists", file=sys.stderr)
@@ -113,6 +114,17 @@ class LinuxDefenderDaemon:
         # Initialize Termux Bridge
         self.termux = TermuxBridge(self.config, logger=self.log)
         self.log("✓ Termux Bridge initialized")
+
+        # Initialize Notification Service
+        self.notifications = create_notification_service(logger=self.log)
+        # Run async initialization synchronously (daemon context)
+        import asyncio
+        try:
+            asyncio.run(self.notifications.initialize())
+            self.log("✓ Notification service initialized")
+        except Exception as e:
+            self.log(f"⚠️ Notification service initialization warning: {e}")
+            # Continue even if notifications fail
 
         # Git credentials
         self.git_config = self._load_git_credentials()
@@ -269,6 +281,14 @@ class LinuxDefenderDaemon:
 
         if issues:
             self.log(f"⚠️ Found {len(issues)} infrastructure issues")
+            # Send alert for infrastructure issues
+            import asyncio
+            asyncio.run(self.notifications.send_alert(
+                alert_type='infrastructure_issues',
+                message=f"Found {len(issues)} infrastructure issues",
+                severity='warning',
+                data={'issues': issues}
+            ))
         else:
             self.log("✓ Linux infrastructure healthy")
 
@@ -282,14 +302,36 @@ class LinuxDefenderDaemon:
 
         if not health_report['ssh_connection']:
             self.log("❌ Cannot connect to Termux via SSH")
+            import asyncio
+            asyncio.run(self.notifications.send_alert(
+                alert_type='termux_connection_failed',
+                message='Cannot connect to Termux Defender via SSH',
+                severity='critical'
+            ))
             return
 
         if not health_report['defender_running']:
             self.log("⚠️ Termux Defender not running - attempting restart")
+            import asyncio
+            asyncio.run(self.notifications.send_alert(
+                alert_type='termux_defender_down',
+                message='Termux Defender not running - attempting restart',
+                severity='critical'
+            ))
             if self.termux.restart_defender():
                 self.log("✓ Restarted Termux Defender")
+                asyncio.run(self.notifications.send_alert(
+                    alert_type='termux_defender_restarted',
+                    message='Successfully restarted Termux Defender',
+                    severity='success'
+                ))
             else:
                 self.log("❌ Failed to restart Termux Defender")
+                asyncio.run(self.notifications.send_alert(
+                    alert_type='termux_defender_restart_failed',
+                    message='Failed to restart Termux Defender - manual intervention required',
+                    severity='critical'
+                ))
             return
 
         if health_report['issues_detected']:
@@ -456,6 +498,20 @@ class LinuxDefenderDaemon:
 
         self.log(f"✓ Synthesis complete for {repo}")
         self.log(f"   Result: {synthesis.split('**')[1]}")
+
+        # Send notification for consilium synthesis
+        import asyncio
+        asyncio.run(self.notifications.send_alert(
+            alert_type='consilium_synthesized',
+            message=f"Consilium synthesized for {repo}",
+            severity='info',
+            data={
+                'repo': repo,
+                'agents': len(verdicts),
+                'verdicts': verdicts,
+                'result': synthesis.split('**')[1].strip()
+            }
+        ))
 
         # Log to autonomous actions
         self.state['autonomous_actions'].append({
