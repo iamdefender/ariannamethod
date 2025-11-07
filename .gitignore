@@ -131,3 +131,6 @@ mac_daemon/__pycache__/
 # Scribe cache files
 .scribe_*_cache.json
 */.scribe_*_cache.json
+
+# Defender credentials (NEVER commit)
+.claude-defender/.defender_credentials
