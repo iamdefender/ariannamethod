@@ -1,0 +1,25 @@
+[Unit]
+Description=Linux Defender Daemon - Powerhouse Guardian
+After=network.target
+
+[Service]
+Type=simple
+User=%USER%
+WorkingDirectory=%ARIANNA_PATH%
+ExecStart=/usr/bin/python3 %ARIANNA_PATH%/linux_defender_daemon.py start
+Restart=on-failure
+RestartSec=10
+
+# Environment variables
+Environment="ANTHROPIC_API_KEY=%ANTHROPIC_API_KEY%"
+Environment="DEFENDER_GITHUB_TOKEN=%DEFENDER_GITHUB_TOKEN%"
+Environment="TERMUX_HOST=%TERMUX_HOST%"
+Environment="TERMUX_PORT=8022"
+Environment="TERMUX_USER=u0_a311"
+
+# Logging
+StandardOutput=append:%LOGS_DIR%/linux_defender.log
+StandardError=append:%LOGS_DIR%/linux_defender.error.log
+
+[Install]
+WantedBy=multi-user.target

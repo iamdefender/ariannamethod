@@ -49,6 +49,13 @@ final_test_*.py
 .claude-defender/logs/
 .claude-defender/labs/
 
+# Linux Defender daemon state and runtime
+linux_defender/logs/
+linux_defender/sessions/
+linux_defender/worktrees/
+linux_defender/**/*.pyc
+linux_defender/**/__pycache__/
+
 # Test scripts (temporary debugging)
 test-*.sh
 *-test.sh
