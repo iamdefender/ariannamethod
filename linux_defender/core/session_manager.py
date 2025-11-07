@@ -68,8 +68,33 @@ class DefenderSession:
         with open(self.state_file, 'w') as f:
             json.dump(state_data, f, indent=2)
 
+    def can_transition_to(self, new_state: SessionState) -> bool:
+        """Check if transition is valid"""
+        valid_transitions = {
+            SessionState.ACTIVE: [
+                SessionState.AWAITING_REVIEW,
+                SessionState.COMPLETED,
+                SessionState.FAILED,
+                SessionState.CANCELLED
+            ],
+            SessionState.AWAITING_REVIEW: [
+                SessionState.ACTIVE,
+                SessionState.COMPLETED,
+                SessionState.CANCELLED
+            ],
+            SessionState.COMPLETED: [],
+            SessionState.FAILED: [],
+            SessionState.CANCELLED: []
+        }
+        return new_state in valid_transitions.get(self.state, [])
+
     def transition_to(self, new_state: SessionState):
-        """Transition to new state"""
+        """Transition to new state with validation"""
+        if not self.can_transition_to(new_state):
+            raise ValueError(
+                f"Invalid state transition: {self.state.value} -> {new_state.value}"
+            )
+
         old_state = self.state
         self.state = new_state
         self._save_state()
@@ -228,3 +253,67 @@ class SessionManager:
             self.cleanup_session(session_id)
 
         return len(sessions_to_cleanup)
+
+    def cleanup_stale_sessions(self):
+        """Cleanup stale sessions from previous daemon runs (startup cleanup)"""
+        cleaned = 0
+
+        # 1. Prune all git worktrees
+        try:
+            subprocess.run(
+                ['git', 'worktree', 'prune'],
+                cwd=self.base_repo,
+                capture_output=True,
+                check=True
+            )
+            print("✓ Pruned stale git worktrees")
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️ Failed to prune worktrees: {e.stderr.decode()}")
+
+        # 2. List and delete all defender-session-* branches
+        try:
+            result = subprocess.run(
+                ['git', 'branch'],
+                cwd=self.base_repo,
+                capture_output=True,
+                text=True
+            )
+
+            for line in result.stdout.split('\n'):
+                if 'defender-session-' in line:
+                    branch = line.strip().lstrip('* ')
+                    try:
+                        subprocess.run(
+                            ['git', 'branch', '-D', branch],
+                            cwd=self.base_repo,
+                            capture_output=True,
+                            check=True
+                        )
+                        cleaned += 1
+                    except subprocess.CalledProcessError:
+                        pass
+
+            if cleaned > 0:
+                print(f"✓ Deleted {cleaned} stale session branches")
+        except Exception as e:
+            print(f"⚠️ Failed to cleanup branches: {e}")
+
+        # 3. Mark all ACTIVE sessions as FAILED (they died with daemon)
+        failed_count = 0
+        for session in list(self.sessions.values()):
+            if session.state == SessionState.ACTIVE:
+                try:
+                    session.state = SessionState.FAILED
+                    session._save_state()
+                    session.log("Marked as FAILED (daemon restart)")
+                    failed_count += 1
+                except Exception as e:
+                    print(f"⚠️ Failed to mark session {session.id} as failed: {e}")
+
+        if failed_count > 0:
+            print(f"✓ Marked {failed_count} stale sessions as FAILED")
+
+        return {
+            'branches_deleted': cleaned,
+            'sessions_marked_failed': failed_count
+        }

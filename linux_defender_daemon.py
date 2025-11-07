@@ -103,7 +103,12 @@ class LinuxDefenderDaemon:
             WORKTREES_DIR,
             ARIANNA_PATH
         )
+
+        # Cleanup stale sessions on startup (critical for fresh state)
+        cleanup_result = self.sessions.cleanup_stale_sessions()
         self.log(f"✓ Session Manager initialized ({len(self.sessions.sessions)} active sessions)")
+        self.log(f"✓ Startup cleanup: {cleanup_result['branches_deleted']} branches, "
+                f"{cleanup_result['sessions_marked_failed']} sessions marked FAILED")
 
         # Initialize Termux Bridge
         self.termux = TermuxBridge(self.config, logger=self.log)
