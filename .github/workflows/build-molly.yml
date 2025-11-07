@@ -21,20 +21,14 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
         
-    - name: Setup Gradle
+    - name: Setup Gradle 8.2
       uses: gradle/gradle-build-action@v2
-      
-    - name: Create Gradle wrapper
-      working-directory: apk/MollyWidget
-      run: gradle wrapper --gradle-version 8.2
-      
-    - name: Make gradlew executable
-      working-directory: apk/MollyWidget
-      run: chmod +x gradlew
+      with:
+        gradle-version: 8.2
       
     - name: Build Debug APK
       working-directory: apk/MollyWidget
-      run: ./gradlew assembleDebug --stacktrace
+      run: gradle assembleDebug --stacktrace
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
