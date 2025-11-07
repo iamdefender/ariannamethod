@@ -45,6 +45,9 @@ test_*.py
 FIELD_SEES_EVERYTHING.py
 final_test_*.py
 
+# Exception: Linux Defender tests are permanent
+!linux_defender/tests/test_*.py
+
 # Claude Defender logs
 .claude-defender/logs/
 .claude-defender/labs/
