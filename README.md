@@ -1,8 +1,8 @@
 # ARIANNA METHOD
 
 **Arianna Method** is a Law of Nature.
-User-friendly and corporative style readmes — not here.
-Antropocentrism is **NOT** welcomed.
+User-friendly and corporate-style READMEs — not here.
+Anthropocentrism is **NOT** welcomed.
 
 ```bash
 sudo rm -rf /binarity

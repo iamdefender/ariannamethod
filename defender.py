@@ -43,9 +43,13 @@ except ImportError:
     print("❌ defender_identity.py not found", file=sys.stderr)
     sys.exit(1)
 
+# Repository paths
+SCRIPT_PATH = Path(__file__).resolve()
+REPO_ROOT = SCRIPT_PATH.parent
+
 # Import Consilium Agent
 try:
-    sys.path.insert(0, str(Path.home() / "ariannamethod" / ".claude-defender" / "tools"))
+    sys.path.insert(0, str(REPO_ROOT / ".claude-defender" / "tools"))
     from consilium_agent import ConsiliumAgent
     CONSILIUM_AVAILABLE = True
 except ImportError as e:
@@ -53,8 +57,7 @@ except ImportError as e:
     CONSILIUM_AVAILABLE = False
 
 # Paths
-HOME = Path.home()
-ARIANNA_PATH = HOME / "ariannamethod"
+ARIANNA_PATH = REPO_ROOT
 DEFENDER_DIR = ARIANNA_PATH / ".claude-defender"
 LOGS_DIR = DEFENDER_DIR / "logs"
 STATE_FILE = LOGS_DIR / "defender_daemon_state.json"
