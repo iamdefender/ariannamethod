@@ -29,15 +29,42 @@ class TermuxBridge:
 
         self.logger = logger
 
-        # Pattern detection for issues
+        # Pattern detection for issues (from claude-ready-monitor)
         self.error_patterns = [
             r'ERROR',
             r'FAILED',
             r'❌',
             r'Exception',
             r'Traceback',
-            r'not running'
+            r'not running',
+            r'Connection refused',
+            r'Permission denied',
+            r'CRITICAL'
         ]
+
+        # Health status patterns (from claude-ready-monitor analysis)
+        self.health_patterns = {
+            'healthy': [
+                r'Defender initialized successfully',
+                r'Health check: OK',
+                r'Monitoring active',
+                r'✓',
+                r'Session created'
+            ],
+            'warning': [
+                r'WARNING',
+                r'Retry attempt',
+                r'Temporary failure',
+                r'⚠️'
+            ],
+            'critical': [
+                r'ERROR',
+                r'CRITICAL',
+                r'Failed to initialize',
+                r'Connection lost',
+                r'Daemon stopped'
+            ]
+        }
 
     def log(self, message):
         """Log message"""
@@ -244,6 +271,29 @@ class TermuxBridge:
         except Exception as e:
             self.log(f"❌ Error restarting defender: {e}")
             return False
+
+    def analyze_health(self, output):
+        """Analyze health status from output (from claude-ready-monitor)"""
+        status = 'unknown'
+        matched_patterns = []
+
+        # Check in priority order: critical > warning > healthy
+        for severity in ['critical', 'warning', 'healthy']:
+            for pattern in self.health_patterns[severity]:
+                if re.search(pattern, output, re.IGNORECASE | re.MULTILINE):
+                    status = severity
+                    matched_patterns.append(pattern)
+                    if severity == 'critical':
+                        break
+            if status == 'critical':
+                break
+
+        return {
+            'status': status,
+            'patterns': matched_patterns,
+            'requires_action': status == 'critical',
+            'requires_restart': status == 'critical'
+        }
 
     def full_health_check(self):
         """Complete health check of Termux Defender"""
