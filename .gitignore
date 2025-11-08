@@ -128,12 +128,13 @@ scribe_webhook.pid
 memory/scribe/*.json
 !memory/scribe/README.md
 .scribe_*_cache.json  # Scribe's repo_monitor caches for ecosystem awareness
-# Scribe local tools (security risk if public)
-scribe_git_tools.py
 
-# Mac daemon sensitive files
-mac_daemon/git_tools.py
-mac_daemon/job_queue.py
+# Git tools are SAFE - no credentials, only public git identity
+# scribe_git_tools.py - SAFE TO COMMIT ✅
+# defender_git_tools.py - SAFE TO COMMIT ✅
+# mac_daemon/git_tools.py - SAFE TO COMMIT ✅
+
+# Mac daemon runtime files
 mac_daemon/.DS_Store
 mac_daemon/__pycache__/
 
