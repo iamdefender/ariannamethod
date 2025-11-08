@@ -8,7 +8,9 @@ import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
 
-DB_PATH = Path.home() / "ariannamethod" / "resonance.sqlite3"
+# Auto-detect repo root (arianna_core_utils/../ = repo root)
+REPO_ROOT = Path(__file__).parent.parent
+DB_PATH = REPO_ROOT / "resonance.sqlite3"
 
 
 def get_my_genesis_reflections(agent_name: str, limit: int = 5) -> list[dict]:

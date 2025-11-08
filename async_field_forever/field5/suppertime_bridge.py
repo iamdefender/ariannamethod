@@ -14,8 +14,9 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
 
-# Paths
-RESONANCE_DB = Path.home() / "ariannamethod" / "resonance.sqlite3"
+# Auto-detect repo root (field5/../../ = repo root)
+REPO_ROOT = Path(__file__).parent.parent.parent
+RESONANCE_DB = REPO_ROOT / "resonance.sqlite3"
 
 
 # ====== SUPPERTIME EVENT TYPES ======
