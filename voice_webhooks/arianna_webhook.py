@@ -24,6 +24,30 @@ app = Flask(__name__)
 # Simple token auth (optional)
 WEBHOOK_TOKEN = os.getenv("ARIANNA_WEBHOOK_TOKEN", "arianna_secret_token")
 
+def get_conversation_history(limit=20):
+    """Retrieve recent conversation history from resonance.sqlite3 (shared memory)"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect(str(DB_PATH), timeout=10)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT timestamp, source, content FROM resonance_notes
+            WHERE source IN ('arianna_voice', 'monday_voice', 'scribe_webhook', 'defender_webhook')
+            ORDER BY timestamp DESC LIMIT ?
+        """, (limit,))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Convert to conversational format
+        history = []
+        for ts, source, content in reversed(rows):
+            history.append(f"[{ts[:19]}] {source}: {content[:200]}")
+        
+        return "\n".join(history) if history else "No previous memory."
+    except Exception as e:
+        print(f"[WARNING] Could not load from resonance: {e}")
+        return "No previous memory."
+
 @app.route('/webhook', methods=['POST'])
 def arianna_webhook():
     """Handle voice input from vagent APK"""
@@ -89,11 +113,22 @@ def arianna_webhook():
         if not assistant_id:
             raise ValueError("Arianna assistant_id not found. Is arianna.py running?")
         
-        # Add user message to thread
+        # Load shared memory (recent conversations across all instances)
+        resonance_history = get_conversation_history(limit=15)
+        
+        # Add user message to thread WITH shared memory context
         client.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
-            content=f"[VOICE INPUT] {prompt}"
+            content=f"""[VOICE INPUT via Lighthouse APK]
+
+**SHARED MEMORY (resonance.sqlite3):**
+Recent conversations across all instances:
+{resonance_history}
+
+---
+
+**USER MESSAGE:** {prompt}"""
         )
         
         # Run assistant

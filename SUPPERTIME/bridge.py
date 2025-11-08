@@ -44,8 +44,14 @@ from theatre import (
 from db import db_get, db_set, db_init, SUMMARY_EVERY
 
 # Field Bridge - SUPPERTIME → Field event dispatcher
+# Auto-detect repo root (bridge.py is in SUPPERTIME/, so ../ = repo root)
 import sys
-sys.path.insert(0, str(Path.home() / "ariannamethod" / "async_field_forever" / "field"))
+from pathlib import Path as _Path
+_SUPPERTIME_ROOT = _Path(__file__).parent
+_REPO_ROOT = _SUPPERTIME_ROOT.parent
+_FIELD_PATH = _REPO_ROOT / "async_field_forever" / "field"
+sys.path.insert(0, str(_FIELD_PATH))
+
 try:
     from suppertime_bridge import (
         notify_field_chapter_load,
