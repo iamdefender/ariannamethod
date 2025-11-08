@@ -15,16 +15,19 @@ from pathlib import Path
 import anthropic
 import sqlite3
 
+# Auto-detect repo root (voice_webhooks/../ = repo root)
+REPO_ROOT = Path(__file__).parent.parent
+DB_PATH = REPO_ROOT / "resonance.sqlite3"
+MEMORY_PATH = REPO_ROOT / "memory" / "scribe"
+
 # Add project to path
-sys.path.insert(0, str(Path.home() / "ariannamethod"))
+sys.path.insert(0, str(REPO_ROOT))
 
 app = Flask(__name__)
 
 # Config
 WEBHOOK_TOKEN = os.getenv("SCRIBE_WEBHOOK_TOKEN", "scribe_secret_token")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-DB_PATH = Path.home() / "ariannamethod" / "resonance.sqlite3"
-MEMORY_PATH = Path.home() / "ariannamethod" / "memory" / "scribe"
 
 # Ensure memory directory exists
 MEMORY_PATH.mkdir(parents=True, exist_ok=True)

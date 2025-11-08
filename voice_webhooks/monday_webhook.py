@@ -12,8 +12,12 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+# Auto-detect repo root (voice_webhooks/../ = repo root)
+REPO_ROOT = Path(__file__).parent.parent
+DB_PATH = REPO_ROOT / "resonance.sqlite3"
+
 # Add monday to path
-sys.path.insert(0, str(Path.home() / "ariannamethod"))
+sys.path.insert(0, str(REPO_ROOT))
 
 app = Flask(__name__)
 
@@ -45,7 +49,7 @@ def monday_webhook():
         import sqlite3
         
         client = OpenAI(api_key=os.getenv("OPENAI_MONDAY_API"))
-        db_path = str(Path.home() / "ariannamethod" / "resonance.sqlite3")
+        db_path = str(DB_PATH)
         
         # Get Monday's thread_id from database
         conn = sqlite3.connect(db_path)
@@ -120,7 +124,7 @@ def monday_webhook():
     # Log to resonance.sqlite3
     try:
         import sqlite3
-        db_path = str(Path.home() / "ariannamethod" / "resonance.sqlite3")
+        db_path = str(DB_PATH)
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute("""

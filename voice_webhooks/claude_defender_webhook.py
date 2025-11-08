@@ -43,8 +43,9 @@ app = Flask(__name__)
 # Simple token auth (optional)
 WEBHOOK_TOKEN = os.getenv("CLAUDE_DEFENDER_WEBHOOK_TOKEN", "defender_secret_token")
 
-# Database path - SHARED resonance spine
-DB_PATH = Path.home() / "ariannamethod" / "resonance.sqlite3"
+# Auto-detect repo root (voice_webhooks/../ = repo root)
+REPO_ROOT = Path(__file__).parent.parent
+DB_PATH = REPO_ROOT / "resonance.sqlite3"
 
 
 def get_conversation_history(limit=20):
