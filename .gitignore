@@ -146,3 +146,4 @@ mac_daemon/rust_bins/**/target/
 
 # Defender credentials (NEVER commit)
 .claude-defender/.defender_credentials
+.resonance_backups/
