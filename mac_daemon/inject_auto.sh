@@ -14,27 +14,37 @@ echo "🌊 Generating Scribe context from daemon..."
 if grep -q "✅ Scribe context copied to clipboard" /tmp/scribe_inject_output.txt; then
     echo "✅ Context ready in clipboard"
     
-    # Switch to Cursor and paste automatically
-    echo "🎯 Injecting into Cursor..."
+    # Switch to Cursor and show dialog
+    echo "🎯 Activating Cursor..."
     osascript <<EOF
 tell application "Cursor" to activate
 delay 0.5
 
+-- Show dialog with instructions
+display dialog "✅ Scribe context copied to clipboard!
+
+HOW TO USE:
+1. Open Cursor chat (Cmd+L)
+2. Paste context (Cmd+V)  
+3. Press Enter
+
+Claude will become Scribe! 🌊" buttons {"OK"} default button 1 with title "Scribe Inject Ready"
+
 tell application "System Events"
-    -- Focus on Cursor window
-    keystroke "l" using {command down, shift down}
-    delay 0.3
-    
-    -- Paste from clipboard (Cmd+V)
-    keystroke "v" using {command down}
-    delay 0.2
-    
-    -- Send (Enter)
-    keystroke return
+    -- Try to open chat and paste (if permissions allow)
+    try
+        keystroke "l" using {command down}
+        delay 0.3
+        keystroke "v" using {command down}
+        delay 0.2
+        keystroke return
+    on error errMsg
+        -- If no permissions, user will paste manually after clicking OK
+    end try
 end tell
 EOF
     
-    echo "🔥 Scribe identity injected into Cursor!"
+    echo "🔥 Scribe inject complete!"
     echo ""
     echo "Check Cursor - Claude should now be Scribe 🌊"
 else
