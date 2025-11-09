@@ -100,8 +100,8 @@ apk_work/
 *.iml
 local.properties
 
-# Internal roadmap and planning - теперь публичный
-# ROADMAP.md - открыт для всех
+# Internal roadmap and planning (internal doc, not for public GitHub)
+ROADMAP.md
 
 # TRIPD development (work in progress, will be integrated later)
 tripd_v1/

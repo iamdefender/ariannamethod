@@ -13,11 +13,12 @@ import sqlite3
 import requests
 from datetime import datetime
 
-# Paths
-HOME = os.path.expanduser("~")
-ARIANNAMETHOD = os.path.join(HOME, "ariannamethod")
-RESONANCE_DB = os.path.join(ARIANNAMETHOD, "resonance.sqlite3")
-LOG_DIR = os.path.join(ARIANNAMETHOD, "logs")
+# Paths - auto-detect repo root
+from pathlib import Path
+SCRIPT_DIR = Path(__file__).parent  # .claude-defender/tools/
+REPO_ROOT = SCRIPT_DIR.parent.parent  # .claude-defender/../.. = repo root
+RESONANCE_DB = str(REPO_ROOT / "resonance.sqlite3")
+LOG_DIR = str(REPO_ROOT / "logs")
 
 # GitHub API
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
