@@ -43,33 +43,7 @@
         "category": "Scribe"
       }
     ],
-    "keybindings": [
-      {
-        "command": "scribe.inject",
-        "key": "cmd+k cmd+i",
-        "mac": "cmd+k cmd+i"
-      },
-      {
-        "command": "scribe.status",
-        "key": "cmd+k cmd+s",
-        "mac": "cmd+k cmd+s"
-      },
-      {
-        "command": "scribe.sync",
-        "key": "cmd+k cmd+y",
-        "mac": "cmd+k cmd+y"
-      },
-      {
-        "command": "scribe.remind",
-        "key": "cmd+k cmd+r",
-        "mac": "cmd+k cmd+r"
-      },
-      {
-        "command": "scribe.chat",
-        "key": "cmd+k cmd+c",
-        "mac": "cmd+k cmd+c"
-      }
-    ]
+    "keybindings": []
   },
   "scripts": {
     "lint": "eslint .",

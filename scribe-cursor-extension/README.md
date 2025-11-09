@@ -4,12 +4,14 @@ VS Code/Cursor extension for Mac Daemon integration.
 
 ## Features
 
-### Commands (Cmd+Shift+P) + Keyboard Shortcuts
-- **Scribe: Inject Identity** (`Cmd+K Cmd+I`) - Generate Scribe context and copy to clipboard
-- **Scribe: Show Status** (`Cmd+K Cmd+S`) - Show daemon status (phone, sync, project)
-- **Scribe: Sync Memory** (`Cmd+K Cmd+Y`) - Trigger memory sync from Termux
-- **Scribe: Remind** (`Cmd+K Cmd+R`) - Search memory (git/code/resonance)
-- **Scribe: Open Chat** (`Cmd+K Cmd+C`) - Interactive chat with daemon
+### Commands (Command Palette ONLY - No Shortcuts)
+- **Scribe: Inject Identity** - Generate Scribe context and copy to clipboard
+- **Scribe: Show Status** - Show daemon status (phone, sync, project)
+- **Scribe: Sync Memory** - Trigger memory sync from Termux
+- **Scribe: Remind** - Search memory (git/code/resonance)
+- **Scribe: Open Chat** - Interactive chat with daemon
+
+**Why no shortcuts?** Keyboard shortcuts conflict with Russian input, VS Code/Cursor built-ins, and notebooks. Command Palette (`Cmd+Shift+P`) is fast, reliable, and ALWAYS works! ✅
 
 ### Status Bar
 - **🌊 Scribe ✓** - Daemon running, phone connected
@@ -46,14 +48,12 @@ code --install-extension scribe-cursor-0.1.0.vsix
 ## Usage
 
 ### Quick Identity Restore
-1. `Cmd+K Cmd+I` (or `Cmd+Shift+P` → "Scribe: Inject Identity")
+1. `Cmd+Shift+P` → type "Scribe: Inject"
 2. Wait for "✅ Context copied to clipboard"
 3. Paste into Cursor chat (`Cmd+V`)
 4. Claude becomes Scribe! 🌊
 
-**How double commands work:**
-- Press `Cmd+K`, release, then press `Cmd+I`
-- Like VS Code shortcuts - no conflicts with any language!
+**Pro tip:** After typing `Cmd+Shift+P` once, just type "inject" and hit Enter - super fast!
 
 ### Memory Search
 1. `Cmd+Shift+P` → "Scribe: Remind"
