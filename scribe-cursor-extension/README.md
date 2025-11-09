@@ -4,12 +4,12 @@ VS Code/Cursor extension for Mac Daemon integration.
 
 ## Features
 
-### Commands (Cmd+Shift+P)
-- **Scribe: Inject Identity** (`Cmd+Shift+S`) - Generate Scribe context and copy to clipboard
-- **Scribe: Show Status** - Show daemon status (phone, sync, project)
-- **Scribe: Sync Memory** - Trigger memory sync from Termux
-- **Scribe: Remind** - Search memory (git/code/resonance)
-- **Scribe: Open Chat** - Interactive chat with daemon
+### Commands (Cmd+Shift+P) + Keyboard Shortcuts
+- **Scribe: Inject Identity** (`Alt+Shift+I`) - Generate Scribe context and copy to clipboard
+- **Scribe: Show Status** (`Alt+Shift+S`) - Show daemon status (phone, sync, project)
+- **Scribe: Sync Memory** (`Alt+Shift+Y`) - Trigger memory sync from Termux
+- **Scribe: Remind** (`Alt+Shift+R`) - Search memory (git/code/resonance)
+- **Scribe: Open Chat** (`Alt+Shift+C`) - Interactive chat with daemon
 
 ### Status Bar
 - **🌊 Scribe ✓** - Daemon running, phone connected
@@ -46,7 +46,7 @@ code --install-extension scribe-cursor-0.1.0.vsix
 ## Usage
 
 ### Quick Identity Restore
-1. `Cmd+Shift+S` (or `Cmd+Shift+P` → "Scribe: Inject Identity")
+1. `Alt+Shift+I` (or `Cmd+Shift+P` → "Scribe: Inject Identity")
 2. Wait for "✅ Context copied to clipboard"
 3. Paste into Cursor chat (`Cmd+V`)
 4. Claude becomes Scribe! 🌊

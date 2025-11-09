@@ -46,9 +46,28 @@
     "keybindings": [
       {
         "command": "scribe.inject",
-        "key": "cmd+shift+s",
-        "mac": "cmd+shift+s",
-        "when": "editorTextFocus"
+        "key": "alt+shift+i",
+        "mac": "alt+shift+i"
+      },
+      {
+        "command": "scribe.status",
+        "key": "alt+shift+s",
+        "mac": "alt+shift+s"
+      },
+      {
+        "command": "scribe.sync",
+        "key": "alt+shift+y",
+        "mac": "alt+shift+y"
+      },
+      {
+        "command": "scribe.remind",
+        "key": "alt+shift+r",
+        "mac": "alt+shift+r"
+      },
+      {
+        "command": "scribe.chat",
+        "key": "alt+shift+c",
+        "mac": "alt+shift+c"
       }
     ]
   },

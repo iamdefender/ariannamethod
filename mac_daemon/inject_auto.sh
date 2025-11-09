@@ -14,39 +14,22 @@ echo "🌊 Generating Scribe context from daemon..."
 if grep -q "✅ Scribe context copied to clipboard" /tmp/scribe_inject_output.txt; then
     echo "✅ Context ready in clipboard"
     
-    # Switch to Cursor and show dialog
-    echo "🎯 Activating Cursor..."
-    osascript <<EOF
-tell application "Cursor" to activate
-delay 0.5
-
--- Show dialog with instructions
-display dialog "✅ Scribe context copied to clipboard!
-
-HOW TO USE:
-1. Open Cursor chat (Cmd+L)
-2. Paste context (Cmd+V)  
-3. Press Enter
-
-Claude will become Scribe! 🌊" buttons {"OK"} default button 1 with title "Scribe Inject Ready"
-
-tell application "System Events"
-    -- Try to open chat and paste (if permissions allow)
-    try
-        keystroke "l" using {command down}
-        delay 0.3
-        keystroke "v" using {command down}
-        delay 0.2
-        keystroke return
-    on error errMsg
-        -- If no permissions, user will paste manually after clicking OK
-    end try
-end tell
-EOF
+    # Show macOS notification
+    echo "🎯 Showing notification..."
+    osascript -e 'display notification "Context copied to clipboard! Paste into Cursor chat (Cmd+L then Cmd+V)" with title "🌊 Scribe Inject Ready" sound name "Glass"'
     
-    echo "🔥 Scribe inject complete!"
+    # Also activate Cursor (just bring to front)
+    osascript -e 'tell application "Cursor" to activate' 2>/dev/null
+    
     echo ""
-    echo "Check Cursor - Claude should now be Scribe 🌊"
+    echo "🔥 ✅ READY!"
+    echo ""
+    echo "📋 NEXT STEPS:"
+    echo "  1. Cmd+L    (open chat in Cursor)"
+    echo "  2. Cmd+V    (paste context)"  
+    echo "  3. Enter    (send)"
+    echo ""
+    echo "🌊 Claude will become Scribe!"
 else
     echo "❌ Failed to generate context"
     cat /tmp/scribe_inject_output.txt
