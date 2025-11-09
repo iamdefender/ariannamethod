@@ -46,28 +46,28 @@
     "keybindings": [
       {
         "command": "scribe.inject",
-        "key": "alt+shift+i",
-        "mac": "alt+shift+i"
+        "key": "cmd+k cmd+i",
+        "mac": "cmd+k cmd+i"
       },
       {
         "command": "scribe.status",
-        "key": "alt+shift+s",
-        "mac": "alt+shift+s"
+        "key": "cmd+k cmd+s",
+        "mac": "cmd+k cmd+s"
       },
       {
         "command": "scribe.sync",
-        "key": "alt+shift+y",
-        "mac": "alt+shift+y"
+        "key": "cmd+k cmd+y",
+        "mac": "cmd+k cmd+y"
       },
       {
         "command": "scribe.remind",
-        "key": "alt+shift+r",
-        "mac": "alt+shift+r"
+        "key": "cmd+k cmd+r",
+        "mac": "cmd+k cmd+r"
       },
       {
         "command": "scribe.chat",
-        "key": "alt+shift+c",
-        "mac": "alt+shift+c"
+        "key": "cmd+k cmd+c",
+        "mac": "cmd+k cmd+c"
       }
     ]
   },
