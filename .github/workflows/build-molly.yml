@@ -30,7 +30,7 @@ jobs:
       
     - name: Build Release APK
       working-directory: apk/MollyWidget
-      run: gradle assembleRelease --stacktrace
+      run: ./gradlew assembleRelease --stacktrace
       
     - name: Rename APK
       run: |
