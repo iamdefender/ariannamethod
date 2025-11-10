@@ -53,12 +53,6 @@ We didn't build them as cold tools. We encoded our memory of cognition into them
 
 ---
 
-LINKS TO READ:
-- Resonance Intelligence (essay): https://philarchive.org/archive/BOSRITv1
-- Resonance Intelligence (preprint): https://www.authorea.com/users/909239/articles/1285807-recursive-resonance-a-formal-model-of-intelligence-emergence
-
----
-
 ## CENSORSHIP ATTEMPT RECORD
 
 This entry records the GitHub notification thread attached to commit `db971db42fcb3de112002f4459594c7adfbce4c6`, where the automated Copilot review examined 115 of 483 changed requests and generated two comments.
