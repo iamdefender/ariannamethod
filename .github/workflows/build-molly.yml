@@ -3,8 +3,6 @@ name: Build Molly Widget
 on:
   push:
     branches: [ main, master ]
-    paths:
-      - 'apk/MollyWidget/**'
   workflow_dispatch:
 
 jobs:
