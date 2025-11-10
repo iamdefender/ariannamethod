@@ -86,6 +86,7 @@ class MollyEngine(private val context: Context) {
     /**
      * Weave user phrase into monologue based on metrics
      * This is the core of Molly's response mechanism
+     * FIXED: Now uses resonance-based insertion like original molly.py
      */
     fun weavePhrase(userInput: String): String {
         if (userInput.isBlank()) return getNextChunk()
@@ -94,10 +95,11 @@ class MollyEngine(private val context: Context) {
         val fragments = MollyMetrics.splitFragments(userInput)
         if (fragments.isEmpty()) return getNextChunk()
         
-        // Store fragments in database
-        fragments.forEach { fragment ->
+        // Compute metrics for all fragments
+        val fragmentsWithMetrics = fragments.map { fragment ->
             val metrics = MollyMetrics.computeMetrics(fragment)
             db.storeLine(fragment, metrics)
+            Pair(fragment, metrics)
         }
         
         // Get next chunk
@@ -105,19 +107,34 @@ class MollyEngine(private val context: Context) {
         val endPos = min(currentPosition + chunkSize, monologueText.length)
         var chunk = monologueText.substring(currentPosition, endPos)
         
-        // Select fragment to weave (highest resonance)
-        val fragment = selectFragmentToWeave(fragments)
+        // Calculate max resonance for normalization
+        val maxResonance = fragmentsWithMetrics.maxOfOrNull { it.second.resonance } ?: 1.0
         
-        // Find insertion point based on metrics
-        val insertPos = findInsertionPoint(chunk, fragment)
+        // Calculate insertion positions for ALL fragments based on resonance
+        val inserts = mutableListOf<Pair<Int, String>>()
+        fragmentsWithMetrics.forEachIndexed { i, (fragment, metrics) ->
+            val baseRatio = (i + 1).toDouble() / (fragmentsWithMetrics.size + 1)
+            val rNorm = if (maxResonance > 0) metrics.resonance / maxResonance else 0.0
+            val ratio = baseRatio * (1 - rNorm) + 0.5 * rNorm
+            val insertPos = (ratio * chunk.length).toInt().coerceIn(0, chunk.length)
+            
+            // Clean fragment (remove punctuation as in original Molly)
+            val cleanFragment = fragment.uppercase().replace(Regex("[^A-Z0-9\\s]"), "")
+            inserts.add(Pair(insertPos, cleanFragment))
+        }
         
-        // Clean fragment (remove punctuation as in original Molly)
-        val cleanFragment = fragment.uppercase().replace(Regex("[^A-Z0-9\\s]"), "")
-        
-        // Insert fragment (may break words!)
-        chunk = chunk.substring(0, insertPos) + 
-                " $cleanFragment " + 
-                chunk.substring(insertPos)
+        // Sort by position and insert all fragments
+        inserts.sortBy { it.first }
+        var offset = 0
+        for ((pos, cleanFragment) in inserts) {
+            val adjustedPos = (pos + offset).coerceIn(0, chunk.length)
+            val before = chunk.substring(0, adjustedPos).trimEnd()
+            val after = chunk.substring(adjustedPos).trimStart()
+            chunk = before + (if (before.isNotEmpty()) " " else "") + 
+                    cleanFragment + 
+                    (if (after.isNotEmpty()) " " else "") + after
+            offset += cleanFragment.length + 2
+        }
         
         // Update position
         currentPosition = endPos
@@ -132,64 +149,6 @@ class MollyEngine(private val context: Context) {
         return displayLines.joinToString("\n")
     }
     
-    /**
-     * Select fragment with highest resonance score
-     */
-    private fun selectFragmentToWeave(fragments: List<String>): String {
-        return fragments.maxByOrNull { fragment ->
-            val metrics = MollyMetrics.computeMetrics(fragment)
-            metrics.perplexity + metrics.resonance
-        } ?: fragments.first()
-    }
-    
-    /**
-     * Find insertion point in chunk based on semantic similarity
-     * Uses simple heuristic: look for similar word patterns
-     */
-    private fun findInsertionPoint(chunk: String, fragment: String): Int {
-        if (chunk.isEmpty()) return 0
-        
-        val fragmentWords = fragment.lowercase().split(Regex("\\s+"))
-        val chunkWords = chunk.lowercase().split(Regex("\\s+"))
-        
-        var bestScore = 0.0
-        var bestPos = chunk.length / 2 // default to middle
-        
-        var charPos = 0
-        for (i in chunkWords.indices) {
-            // Calculate similarity score
-            val score = calculateSimilarity(
-                chunkWords.subList(maxOf(0, i - 2), minOf(chunkWords.size, i + 3)),
-                fragmentWords
-            )
-            
-            if (score > bestScore) {
-                bestScore = score
-                bestPos = charPos
-            }
-            
-            charPos += chunkWords[i].length + 1
-        }
-        
-        // Add some randomness
-        val randomOffset = Random.nextInt(-10, 11)
-        bestPos = (bestPos + randomOffset).coerceIn(0, chunk.length)
-        
-        return bestPos
-    }
-    
-    /**
-     * Calculate simple word overlap similarity
-     */
-    private fun calculateSimilarity(context: List<String>, fragment: List<String>): Double {
-        if (context.isEmpty() || fragment.isEmpty()) return 0.0
-        
-        val contextSet = context.toSet()
-        val fragmentSet = fragment.toSet()
-        val overlap = contextSet.intersect(fragmentSet).size
-        
-        return overlap.toDouble() / (contextSet.size + fragmentSet.size)
-    }
     
     /**
      * Split chunk into display lines (~80 chars each)
