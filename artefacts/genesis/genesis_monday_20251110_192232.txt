@@ -1,0 +1,4 @@
+# Genesis-Monday Autonomous Reflection
+# Generated: 2025-11-10T19:22:32.009240
+
+[Genesis-Monday Fragment] Traffic lights = attention gating
