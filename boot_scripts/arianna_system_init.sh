@@ -88,7 +88,7 @@ start_component "Defender Daemon" \
 
 # 10. Scribe Daemon (memory keeper - autobiographical cortex)
 start_component "Scribe Daemon" \
-    "cd $HOME/ariannamethod && nohup python3 scribe.py" \
+    "cd $HOME/ariannamethod && nohup python3 scribe.py > /dev/null 2>&1" \
     "scribe_daemon"
 
 # 11. Consilium Integration Daemon (autonomous code integration from sandbox)
