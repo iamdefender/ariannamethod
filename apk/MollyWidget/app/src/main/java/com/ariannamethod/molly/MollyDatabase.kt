@@ -4,7 +4,12 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import java.io.File
+import android.util.Log
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * Database helper for storing Molly's mutated monologue
@@ -24,8 +29,8 @@ class MollyDatabase(context: Context) : SQLiteOpenHelper(context, DB_NAME, null,
         private const val COL_RESONANCE = "resonance"
         private const val COL_CREATED_AT = "created_at"
         
-        // Path to shared resonance database (ariannamethod ecosystem)
-        private const val RESONANCE_DB_PATH = "/sdcard/ariannamethod/resonance.sqlite3"
+        // HTTP API endpoint for resonance bus (Termux server)
+        private const val RESONANCE_API_URL = "http://localhost:8080"
     }
     
     data class Line(
@@ -94,33 +99,41 @@ class MollyDatabase(context: Context) : SQLiteOpenHelper(context, DB_NAME, null,
     }
     
     /**
-     * Get recent lines from resonance.sqlite3 if available
-     * This connects Molly to the ariannamethod ecosystem
+     * Get recent lines from resonance HTTP API
+     * This connects Molly to the ariannamethod ecosystem via Termux server
      */
     fun getResonanceLines(limit: Int = 10): List<String> {
-        val resonanceFile = File(RESONANCE_DB_PATH)
-        if (!resonanceFile.exists()) return emptyList()
-        
         return try {
-            val db = SQLiteDatabase.openDatabase(
-                resonanceFile.path,
-                null,
-                SQLiteDatabase.OPEN_READONLY
-            )
+            val url = URL("$RESONANCE_API_URL/resonance/recent?limit=$limit")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 3000
+            connection.readTimeout = 3000
             
-            val lines = mutableListOf<String>()
-            db.rawQuery(
-                "SELECT content FROM events ORDER BY timestamp DESC LIMIT ?",
-                arrayOf(limit.toString())
-            ).use { cursor ->
-                while (cursor.moveToNext()) {
-                    lines.add(cursor.getString(0))
-                }
+            val responseCode = connection.responseCode
+            if (responseCode != 200) {
+                Log.w("MollyDatabase", "Resonance API returned $responseCode")
+                return emptyList()
             }
             
-            db.close()
+            val response = BufferedReader(InputStreamReader(connection.inputStream)).use { it.readText() }
+            connection.disconnect()
+            
+            // Parse JSON response
+            val json = JSONObject(response)
+            val notesArray = json.getJSONArray("notes")
+            val lines = mutableListOf<String>()
+            
+            for (i in 0 until notesArray.length()) {
+                val note = notesArray.getJSONObject(i)
+                val content = note.getString("content")
+                lines.add(content)
+            }
+            
+            Log.d("MollyDatabase", "✓ Fetched ${lines.size} resonance notes from HTTP API")
             lines
         } catch (e: Exception) {
+            Log.w("MollyDatabase", "Failed to fetch resonance via HTTP: ${e.message}")
             emptyList()
         }
     }

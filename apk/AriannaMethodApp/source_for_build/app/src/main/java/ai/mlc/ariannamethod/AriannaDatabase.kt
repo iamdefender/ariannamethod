@@ -4,6 +4,13 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * AriannaDatabase - SQLite persistence for infinite session
@@ -48,9 +55,8 @@ class AriannaDatabase(context: Context) : SQLiteOpenHelper(
         private const val COLUMN_USER_MESSAGE = "user_message"
         private const val COLUMN_ASSISTANT_RESPONSE = "assistant_response"
         
-        // ⚡ SHARED RESONANCE BUS - /sdcard/ariannamethod/resonance.sqlite3
-        private const val SHARED_DB_PATH = "/sdcard/ariannamethod/resonance.sqlite3"
-        private const val SHARED_TABLE = "resonance_notes"
+        // ⚡ SHARED RESONANCE BUS - HTTP API (Termux server)
+        private const val RESONANCE_API_URL = "http://localhost:8080"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -354,56 +360,65 @@ class AriannaDatabase(context: Context) : SQLiteOpenHelper(
      * Connect to shared resonance.sqlite3 bus
      * Returns null if not accessible (permissions or file doesn't exist)
      */
-    private fun getSharedDatabase(): SQLiteDatabase? {
+    /**
+     * Check if Resonance HTTP API is available
+     */
+    private fun isResonanceAPIAvailable(): Boolean {
         return try {
-            val dbFile = java.io.File(SHARED_DB_PATH)
-            if (!dbFile.exists()) {
-                android.util.Log.w("AriannaDatabase", "Shared resonance.sqlite3 not found at $SHARED_DB_PATH")
-                return null
-            }
-            SQLiteDatabase.openDatabase(
-                SHARED_DB_PATH,
-                null,
-                SQLiteDatabase.OPEN_READWRITE
-            )
+            val url = URL("$RESONANCE_API_URL/health")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 1000
+            connection.readTimeout = 1000
+            
+            val responseCode = connection.responseCode
+            connection.disconnect()
+            responseCode == 200
         } catch (e: Exception) {
-            android.util.Log.e("AriannaDatabase", "Cannot access shared resonance: ${e.message}")
-            null
+            false
         }
     }
     
     /**
-     * Read recent events from shared resonance bus
+     * Read recent events from shared resonance HTTP API
      * Returns list of (timestamp, source, content) tuples
      */
     fun getRecentResonanceEvents(limit: Int = 20): List<Triple<String, String, String>> {
         val events = mutableListOf<Triple<String, String, String>>()
-        val sharedDb = getSharedDatabase() ?: return events
         
         try {
-            val cursor = sharedDb.rawQuery(
-                """
-                SELECT timestamp, source, content 
-                FROM $SHARED_TABLE 
-                WHERE source != 'arianna_apk'
-                ORDER BY id DESC 
-                LIMIT ?
-                """.trimIndent(),
-                arrayOf(limit.toString())
-            )
+            val url = URL("$RESONANCE_API_URL/resonance/recent?limit=$limit")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 3000
+            connection.readTimeout = 3000
             
-            cursor.use {
-                while (it.moveToNext()) {
-                    val timestamp = it.getString(0)
-                    val source = it.getString(1)
-                    val content = it.getString(2)
+            if (connection.responseCode != 200) {
+                Log.w("AriannaDatabase", "Resonance API returned ${connection.responseCode}")
+                return events
+            }
+            
+            val response = BufferedReader(InputStreamReader(connection.inputStream)).use { it.readText() }
+            connection.disconnect()
+            
+            val json = JSONObject(response)
+            val notesArray = json.getJSONArray("notes")
+            
+            for (i in 0 until notesArray.length()) {
+                val note = notesArray.getJSONObject(i)
+                val timestamp = note.getString("timestamp")
+                val source = note.optString("source", "unknown")
+                val content = note.getString("content")
+                
+                // Filter out our own messages
+                if (source != "arianna_apk") {
                     events.add(Triple(timestamp, source, content))
                 }
             }
+            
+            Log.d("AriannaDatabase", "✓ Fetched ${events.size} resonance events from HTTP API")
         } catch (e: Exception) {
-            android.util.Log.e("AriannaDatabase", "Error reading shared resonance: ${e.message}")
-        } finally {
-            sharedDb.close()
+            Log.w("AriannaDatabase", "Failed to fetch resonance via HTTP: ${e.message}")
         }
         
         return events
@@ -414,24 +429,44 @@ class AriannaDatabase(context: Context) : SQLiteOpenHelper(
      * Makes APK visible to entire ecosystem
      */
     fun writeToSharedResonance(content: String, metadata: String = ""): Boolean {
-        val sharedDb = getSharedDatabase() ?: return false
-        
         try {
-            val values = ContentValues().apply {
-                put("timestamp", java.time.Instant.now().toString())
-                put("source", "arianna_apk")
+            val url = URL("$RESONANCE_API_URL/resonance/write")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.connectTimeout = 3000
+            connection.readTimeout = 3000
+            connection.doOutput = true
+            
+            // Build JSON payload
+            val jsonPayload = JSONObject().apply {
                 put("content", content)
-                put("metadata", metadata)
+                put("source", "arianna_apk")
+                put("context", "chat_interaction")
+                if (metadata.isNotEmpty()) {
+                    put("metadata", metadata)
+                }
             }
             
-            sharedDb.insert(SHARED_TABLE, null, values)
-            android.util.Log.d("AriannaDatabase", "Wrote to shared resonance: $content")
-            return true
+            // Send request
+            OutputStreamWriter(connection.outputStream).use {
+                it.write(jsonPayload.toString())
+                it.flush()
+            }
+            
+            val responseCode = connection.responseCode
+            connection.disconnect()
+            
+            if (responseCode == 200 || responseCode == 201) {
+                Log.d("AriannaDatabase", "✓ Wrote to shared resonance via HTTP: ${content.take(50)}...")
+                return true
+            } else {
+                Log.w("AriannaDatabase", "Resonance API write returned $responseCode")
+                return false
+            }
         } catch (e: Exception) {
-            android.util.Log.e("AriannaDatabase", "Error writing to shared resonance: ${e.message}")
+            Log.e("AriannaDatabase", "Failed to write to resonance via HTTP: ${e.message}")
             return false
-        } finally {
-            sharedDb.close()
         }
     }
 }
