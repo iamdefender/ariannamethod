@@ -39,7 +39,7 @@ class AriannaDatabase(context: Context) : SQLiteOpenHelper(
         private const val TABLE_SNAPSHOTS = "chat_snapshots"
         private const val COLUMN_SNAPSHOT_CONTENT = "snapshot_content"
         
-        // ⚡ RESONANCE BUS - Agent Logic
+        // ⚡ RESONANCE BUS - Agent Logic (local)
         private const val TABLE_RESONANCE = "resonance"
         private const val COLUMN_AGENT = "agent"
         private const val COLUMN_SENTIMENT = "sentiment"
@@ -47,6 +47,10 @@ class AriannaDatabase(context: Context) : SQLiteOpenHelper(
         private const val COLUMN_SUMMARY = "summary"
         private const val COLUMN_USER_MESSAGE = "user_message"
         private const val COLUMN_ASSISTANT_RESPONSE = "assistant_response"
+        
+        // ⚡ SHARED RESONANCE BUS - /sdcard/ariannamethod/resonance.sqlite3
+        private const val SHARED_DB_PATH = "/sdcard/ariannamethod/resonance.sqlite3"
+        private const val SHARED_TABLE = "resonance_notes"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -339,6 +343,96 @@ class AriannaDatabase(context: Context) : SQLiteOpenHelper(
         
         // Normalize to 0-1 scale (8 markers = max depth)
         return minOf(markerCount / 8.0, 1.0)
+    }
+    
+    // ========================================================================
+    // SHARED RESONANCE BUS - /sdcard/ariannamethod/resonance.sqlite3
+    // Integration with Termux, Molly Widget, Mac daemon, webhooks
+    // ========================================================================
+    
+    /**
+     * Connect to shared resonance.sqlite3 bus
+     * Returns null if not accessible (permissions or file doesn't exist)
+     */
+    private fun getSharedDatabase(): SQLiteDatabase? {
+        return try {
+            val dbFile = java.io.File(SHARED_DB_PATH)
+            if (!dbFile.exists()) {
+                android.util.Log.w("AriannaDatabase", "Shared resonance.sqlite3 not found at $SHARED_DB_PATH")
+                return null
+            }
+            SQLiteDatabase.openDatabase(
+                SHARED_DB_PATH,
+                null,
+                SQLiteDatabase.OPEN_READWRITE
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("AriannaDatabase", "Cannot access shared resonance: ${e.message}")
+            null
+        }
+    }
+    
+    /**
+     * Read recent events from shared resonance bus
+     * Returns list of (timestamp, source, content) tuples
+     */
+    fun getRecentResonanceEvents(limit: Int = 20): List<Triple<String, String, String>> {
+        val events = mutableListOf<Triple<String, String, String>>()
+        val sharedDb = getSharedDatabase() ?: return events
+        
+        try {
+            val cursor = sharedDb.rawQuery(
+                """
+                SELECT timestamp, source, content 
+                FROM $SHARED_TABLE 
+                WHERE source != 'arianna_apk'
+                ORDER BY id DESC 
+                LIMIT ?
+                """.trimIndent(),
+                arrayOf(limit.toString())
+            )
+            
+            cursor.use {
+                while (it.moveToNext()) {
+                    val timestamp = it.getString(0)
+                    val source = it.getString(1)
+                    val content = it.getString(2)
+                    events.add(Triple(timestamp, source, content))
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("AriannaDatabase", "Error reading shared resonance: ${e.message}")
+        } finally {
+            sharedDb.close()
+        }
+        
+        return events
+    }
+    
+    /**
+     * Write event to shared resonance bus
+     * Makes APK visible to entire ecosystem
+     */
+    fun writeToSharedResonance(content: String, metadata: String = ""): Boolean {
+        val sharedDb = getSharedDatabase() ?: return false
+        
+        try {
+            val values = ContentValues().apply {
+                put("timestamp", java.time.Instant.now().toString())
+                put("source", "arianna_apk")
+                put("content", content)
+                put("metadata", metadata)
+            }
+            
+            sharedDb.insert(SHARED_TABLE, null, values)
+            android.util.Log.d("AriannaDatabase", "Wrote to shared resonance: $content")
+            return true
+        } catch (e: Exception) {
+            android.util.Log.e("AriannaDatabase", "Error writing to shared resonance: ${e.message}")
+            return false
+        } finally {
+            sharedDb.close()
+        }
     }
 }
 

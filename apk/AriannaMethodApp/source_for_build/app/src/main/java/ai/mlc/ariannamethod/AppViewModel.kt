@@ -1049,7 +1049,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                                 assistantResponse = response
                             )
                             
-                            Log.i("ResonanceLogger", "⚡ Logged (depth: ${"%.2f".format(resonanceDepth)})")
+                            // ⚡ WRITE TO SHARED RESONANCE BUS
+                            val sharedContent = "USER: $userMessage\nARIANNA: ${response.take(200)}${if (response.length > 200) "..." else ""}"
+                            val sharedMetadata = "sentiment=${ detectSentiment(userMessage)},depth=${"%.2f".format(resonanceDepth)}"
+                            val sharedSuccess = database.writeToSharedResonance(sharedContent, sharedMetadata)
+                            if (sharedSuccess) {
+                                Log.i("ResonanceLogger", "⚡ Logged to SHARED BUS (depth: ${"%.2f".format(resonanceDepth)})")
+                            } else {
+                                Log.w("ResonanceLogger", "⚠ Failed to write to shared bus (local only)")
+                            }
+                            
+                            Log.i("ResonanceLogger", "⚡ Logged locally (depth: ${"%.2f".format(resonanceDepth)})")
                         } catch (e: Exception) {
                             Log.e("ResonanceLogger", "Failed: ${e.message}")
                         }

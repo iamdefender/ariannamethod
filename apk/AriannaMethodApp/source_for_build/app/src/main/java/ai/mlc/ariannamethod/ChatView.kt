@@ -46,6 +46,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.imePadding
 import androidx.navigation.NavController
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.launch
@@ -122,9 +124,18 @@ fun ChatView(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 10.dp)
+                .imePadding()
         ) {
             val lazyColumnListState = rememberLazyListState()
             val coroutineScope = rememberCoroutineScope()
+            
+            // Auto-scroll to bottom when messages change
+            LaunchedEffect(chatState.messages.size) {
+                if (chatState.messages.isNotEmpty()) {
+                    lazyColumnListState.animateScrollToItem(chatState.messages.size)
+                }
+            }
+            
             Text(
                 text = chatState.report.value,
                 textAlign = TextAlign.Center,
@@ -139,9 +150,6 @@ fun ChatView(
                 verticalArrangement = Arrangement.spacedBy(5.dp, alignment = Alignment.Bottom),
                 state = lazyColumnListState
             ) {
-                coroutineScope.launch {
-                    lazyColumnListState.animateScrollToItem(chatState.messages.size)
-                }
                 items(
                     items = chatState.messages,
                     key = { message -> message.id },
