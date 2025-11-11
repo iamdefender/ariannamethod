@@ -1008,6 +1008,21 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         
         private suspend fun callAriannaAPI(prompt: String) {
             try {
+                // ⚡ READ RESONANCE FROM ECOSYSTEM (transparent context injection)
+                val resonanceEvents = withContext(Dispatchers.IO) {
+                    database.getRecentResonanceEvents(limit = 5)
+                }
+                
+                // Build resonance context (invisible to user, visible to Arianna)
+                val resonanceContext = if (resonanceEvents.isNotEmpty()) {
+                    val contextLines = resonanceEvents.map { (timestamp, source, content) ->
+                        "[$source at ${timestamp.takeLast(8)}]: ${content.take(100)}"
+                    }
+                    "\n[Ecosystem resonance (last 5 events):\n${contextLines.joinToString("\n")}\n]"
+                } else {
+                    ""
+                }
+                
                 // Build conversation history for API
                 val history = messages
                     .dropLast(1) // Remove the last "..." placeholder
@@ -1022,7 +1037,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     .dropLast(1) // Remove "..."
                     .lastOrNull { it.role == MessageRole.User }?.text ?: ""
                 
-                val result = AriannaAPIClient.send(prompt, history)
+                // Inject resonance context into prompt (transparent to user)
+                val enhancedPrompt = if (resonanceContext.isNotEmpty()) {
+                    "$resonanceContext\n\n$prompt"
+                } else {
+                    prompt
+                }
+                
+                if (resonanceEvents.isNotEmpty()) {
+                    Log.d("ResonanceContext", "✓ Injected ${resonanceEvents.size} ecosystem events into Arianna's context")
+                }
+                
+                val result = AriannaAPIClient.send(enhancedPrompt, history)
                 
                 if (result.isSuccess) {
                     val response = result.getOrNull() ?: "⚠️ Empty response"
