@@ -13,6 +13,7 @@ import paramiko
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, List
+from urllib.request import Request, urlopen
 from anthropic import Anthropic
 
 # Import Rust tools integration
@@ -103,6 +104,14 @@ class MacDaemon:
         config['ssh_user'] = os.getenv('TERMUX_SSH_USER', config.get('TERMUX_SSH_USER', 'u0_a423'))
         config['ssh_password'] = os.getenv('TERMUX_SSH_PASSWORD', config.get('TERMUX_SSH_PASSWORD'))
         
+        resonance_url = os.getenv('RESONANCE_API_URL', config.get('RESONANCE_API_URL'))
+        if not resonance_url:
+            host = config.get('ssh_host')
+            if host:
+                resonance_url = f"http://{host}:8080"
+        if resonance_url:
+            config['resonance_api_url'] = resonance_url.rstrip('/')
+        
         return config
     
     def _load_state(self):
@@ -131,33 +140,82 @@ class MacDaemon:
         with open(LOG_FILE, 'a') as f:
             f.write(log_line + "\n")
         
-        # Log to Termux resonance.sqlite3 via SSH
+        # Log to Termux resonance bus
         if also_resonance:
-            try:
-                if not self.config.get('ssh_password'):
-                    return
-                
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(
-                    self.config['ssh_host'],
-                    port=self.config['ssh_port'],
-                    username=self.config['ssh_user'],
-                    password=self.config['ssh_password'],
-                    timeout=5
-                )
-                
-                # Escape SQL properly
-                content_escaped = message.replace("'", "''")
-                sql_cmd = f"sqlite3 ~/ariannamethod/resonance.sqlite3 \"INSERT INTO resonance_notes (timestamp, source, content, context) VALUES ('{timestamp}', 'mac_daemon', '{content_escaped}', 'mac_daemon_log');\""
-                
-                ssh.exec_command(sql_cmd, timeout=5)
-                ssh.close()
-            except Exception as e:
-                # Silent fail - don't break daemon if Termux unavailable
-                with open(LOG_FILE, 'a') as f:
-                    f.write(f"[{timestamp}] [WARN] Resonance log failed: {e}\n")
+            if not self._log_resonance_http(message):
+                self._log_resonance_ssh(timestamp, message)
     
+    def _ensure_resonance_forward(self):
+        """Ensure ADB port forwarding for resonance HTTP API"""
+        try:
+            subprocess.run(
+                ['adb', 'forward', 'tcp:8080', 'tcp:8080'],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except Exception as e:
+            warn_line = f"[{datetime.now().isoformat()}] [WARN] Failed to set adb forward: {e}"
+            with open(LOG_FILE, 'a') as f:
+                f.write(warn_line + "\n")
+
+    def _log_resonance_http(self, message: str) -> bool:
+        """Log to resonance bus via HTTP API (Termux server)"""
+        api_base = self.config.get('resonance_api_url')
+        if not api_base:
+            return False
+        
+        try:
+            payload = json.dumps({
+                "content": message,
+                "source": "mac_daemon",
+                "context": "mac_daemon_log"
+            }).encode('utf-8')
+            
+            req = Request(
+                f"{api_base}/resonance/write",
+                data=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            with urlopen(req, timeout=5) as resp:
+                return 200 <= resp.status < 300
+        except Exception as e:
+            warn_line = f"[{datetime.now().isoformat()}] [WARN] Resonance HTTP log failed: {e}"
+            with open(LOG_FILE, 'a') as f:
+                f.write(warn_line + "\n")
+            return False
+    
+    def _log_resonance_ssh(self, timestamp: str, message: str):
+        """Fallback to direct SSH logging when HTTP API unavailable"""
+        try:
+            if not self.config.get('ssh_password'):
+                return
+            
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(
+                self.config['ssh_host'],
+                port=self.config['ssh_port'],
+                username=self.config['ssh_user'],
+                password=self.config['ssh_password'],
+                timeout=5
+            )
+            
+            content_escaped = message.replace("'", "''")
+            sql_cmd = (
+                "sqlite3 ~/ariannamethod/resonance.sqlite3 "
+                "\"INSERT INTO resonance_notes "
+                "(timestamp, source, content, context) "
+                f"VALUES ('{timestamp}', 'mac_daemon', '{content_escaped}', 'mac_daemon_log');\""
+            )
+            
+            ssh.exec_command(sql_cmd, timeout=5)
+            ssh.close()
+        except Exception as e:
+            warn_line = f"[{datetime.now().isoformat()}] [WARN] Resonance SSH log failed: {e}"
+            with open(LOG_FILE, 'a') as f:
+                f.write(warn_line + "\n")
+
     def check_phone(self):
         """Check if phone connected via ADB"""
         try:
@@ -175,6 +233,7 @@ class MacDaemon:
                 
                 # If connected, trigger sync
                 if connected:
+                    self._ensure_resonance_forward()
                     self.sync_memory()
             
             self.state['last_phone_check'] = datetime.now().isoformat()
@@ -384,10 +443,28 @@ class MacDaemon:
             return None
     
     def read_termux_resonance(self, limit=20):
-        """Read recent memory from Termux resonance.sqlite3 via SSH"""
+        """Read recent memory from Termux resonance via HTTP (fallback SSH)"""
+        api_base = self.config.get('resonance_api_url')
+        if api_base:
+            try:
+                with urlopen(f"{api_base}/resonance/recent?limit={limit}", timeout=5) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                notes = data.get('notes', [])
+                if notes:
+                    formatted = []
+                    for note in reversed(notes):
+                        ts = note.get('timestamp', '')[:19]
+                        source = note.get('source', 'unknown')
+                        content = note.get('content', '')[:200]
+                        formatted.append(f"[{ts}] {source}: {content}")
+                    return "\n".join(formatted)
+                return "No resonance memory."
+            except Exception as e:
+                self.log(f"[WARN] HTTP resonance fetch failed: {e}")
+        
         try:
             if not self.config.get('ssh_password'):
-                return "SSH not configured."
+                return "Resonance API not available."
             
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -399,7 +476,11 @@ class MacDaemon:
                 timeout=5
             )
             
-            cmd = f"sqlite3 ~/ariannamethod/resonance.sqlite3 \"SELECT timestamp, source, substr(content, 1, 200) FROM resonance_notes ORDER BY timestamp DESC LIMIT {limit};\""
+            cmd = (
+                "sqlite3 ~/ariannamethod/resonance.sqlite3 "
+                "\"SELECT timestamp, source, substr(content, 1, 200) "
+                f"FROM resonance_notes ORDER BY timestamp DESC LIMIT {limit};\""
+            )
             stdin, stdout, stderr = ssh.exec_command(cmd, timeout=10)
             output = stdout.read().decode('utf-8')
             ssh.close()
@@ -407,7 +488,7 @@ class MacDaemon:
             if output:
                 lines = output.strip().split('\n')
                 formatted = []
-                for line in lines[::-1]:  # Reverse to chronological order
+                for line in lines[::-1]:
                     parts = line.split('|', 2)
                     if len(parts) >= 3:
                         ts, source, content = parts
