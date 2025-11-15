@@ -40,7 +40,9 @@ except ImportError:
 def check_webhook_health(webhook):
     """Check if webhook is responding"""
     try:
-        response = requests.get(f"http://127.0.0.1:{webhook['port']}/health", timeout=5)
+        # Increased timeout for Defender webhook (loads full conversation history)
+        timeout = 15 if webhook['name'] == 'Claude Defender' else 8
+        response = requests.get(f"http://127.0.0.1:{webhook['port']}/health", timeout=timeout)
         return response.status_code == 200
     except:
         return False
