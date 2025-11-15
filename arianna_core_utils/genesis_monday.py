@@ -211,10 +211,13 @@ What's he trying to do? What's he avoiding? Be sharp, but affectionate.
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"].strip()
-            
+
+            # Log response length for debugging
+            logger.info(f"Perplexity response length: {len(content)} chars")
+
             # Remove citation markers [1] [2] etc from Perplexity
             content = re.sub(r'\[\d+\]', '', content).strip()
-            
+
             return content
             
     except Exception as e:
