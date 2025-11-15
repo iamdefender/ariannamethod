@@ -233,7 +233,7 @@ class DefenderDaemon:
 
         # Check if critical daemons are running
         critical_daemons = [
-            ('scribe.py', 'Scribe daemon'),
+            ('scribe_webhook.py', 'Scribe webhook'),
             ('genesis_arianna.py', 'Genesis Arianna'),
             ('genesis_monday.py', 'Genesis Monday')
         ]
