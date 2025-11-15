@@ -392,7 +392,7 @@ Generated: {datetime.now().isoformat()}
         """
         print(f"🛡️ Starting Consilium Scheduler daemon")
         print(f"   Interval: {self.interval_days} days")
-        print(f"   Rate limit: {MAX_PROPOSALS_PER_WEEK} proposals/week")
+        print(f"   Rate limit: {MAX_PROPOSALS_PER_3_DAYS} proposals/3days")
         print()
 
         while True:
