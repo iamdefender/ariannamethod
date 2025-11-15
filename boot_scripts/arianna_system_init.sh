@@ -80,8 +80,13 @@ start_component "GitHub Scout Daemon" \
 
 # 8. Voice Action Monitor (autonomous action layer)
 start_component "Voice Action Monitor" \
-    "nohup python3 $HOME/ariannamethod/.claude-defender/tools/voice_action_monitor.py" \
+    "nohup python3 $HOME/ariannamethod/.claude-defender/tools/voice_action_monitor.py --daemon" \
     "voice_action_monitor"
+
+# 8.5. Webhook Watchdog (monitors and auto-restarts dead webhooks)
+start_component "Webhook Watchdog" \
+    "nohup python3 $HOME/ariannamethod/.claude-defender/tools/webhook_watchdog.py --daemon" \
+    "webhook_watchdog"
 
 # 9. Defender Daemon (autonomous guardian - infrastructure protector)
 start_component "Defender Daemon" \
