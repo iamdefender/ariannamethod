@@ -71,7 +71,7 @@ def restart_webhook(webhook):
     log_file = WEBHOOK_DIR / f"{webhook['process'].replace('.py', '.log')}"
     cmd = f"cd {WEBHOOK_DIR} && nohup python3 {webhook['process']} > {log_file} 2>&1 &"
     subprocess.run(cmd, shell=True)
-    time.sleep(3)
+    time.sleep(8)  # Increased wait time for webhook startup (was 3)
 
     # Verify restart
     if check_webhook_health(webhook):
