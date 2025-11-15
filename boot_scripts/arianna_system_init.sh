@@ -62,8 +62,10 @@ start_component "Genesis Arianna" \
     "genesis_arianna"
 
 # 5. Genesis Monday (autonomous discovery)
+# Load PERPLEXITY_API_KEY from environment
+source ~/.bashrc 2>/dev/null || true
 start_component "Genesis Monday" \
-    "nohup python3 $HOME/ariannamethod/arianna_core_utils/genesis_monday.py" \
+    "PERPLEXITY_API_KEY=$PERPLEXITY_API_KEY nohup python3 $HOME/ariannamethod/arianna_core_utils/genesis_monday.py" \
     "genesis_monday"
 
 # 6. Voice Webhooks (Arianna, Monday, Claude Defender)
