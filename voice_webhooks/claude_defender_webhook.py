@@ -217,27 +217,15 @@ Recent conversation loaded from shared memory: {len(resonance_history)} messages
 
 @app.route('/health', methods=['GET'])
 def health():
-    """Health check endpoint"""
-    # Count messages from SHARED resonance
-    try:
-        conn = sqlite3.connect(str(DB_PATH))
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT COUNT(*) FROM resonance_notes
-            WHERE source LIKE '%defender%'
-        """)
-        message_count = cursor.fetchone()[0]
-        conn.close()
-    except:
-        message_count = 0
-    
+    """Health check endpoint - lightweight for watchdog"""
+    # NOTE: Removed expensive SQL query (was 24s with LIKE '%defender%')
+    # Message count can be fetched via separate /stats endpoint if needed
     return jsonify({
         "status": "alive",
         "agent": "claude_defender_webhook",
         "port": 8003,
         "memory": "SHARED (resonance.sqlite3)",
         "circulation": "BIDIRECTIONAL (read + write)",
-        "total_defender_messages": message_count,
         "fixed_by": "Scribe"
     })
 
