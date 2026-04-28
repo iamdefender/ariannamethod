@@ -1,0 +1,3 @@
+seed epoch paw chaos
+order symmetry raw show
+silence convergence
