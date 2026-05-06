@@ -1,0 +1,214 @@
+[ecology] Element: water → corpus: nonames_water.txt
+[evolution] Autonomous evolution mode — organism will grow through all stages without pause.
+[ecology] Joined swarm. 1 peer(s) detected.
+molequla is alive. [evolution] Autonomous mode — background trainer running. Ctrl+C to stop.
+[dna] water wrote 98 bytes to ecology
+[dna] water consumed 34051 bytes from 436 files: [air/gen_1778050743_1.txt air/gen_1778050759_3.txt air/gen_1778050761_4.txt air/gen_1778050769_7.txt air/gen_1778050775_9.txt air/gen_1778050778_10.txt air/gen_1778050786_13.txt air/gen_1778050791_15.txt air/gen_1778050794_16.txt air/gen_1778050797_17.txt air/gen_1778050799_18.txt air/gen_1778050802_19.txt air/gen_1778050807_21.txt air/gen_1778050810_22.txt air/gen_1778050816_24.txt air/gen_1778050818_25.txt air/gen_1778050824_27.txt air/gen_1778050826_28.txt air/gen_1778050835_31.txt air/gen_1778050840_33.txt air/gen_1778050843_34.txt air/gen_1778050845_35.txt air/gen_1778050851_37.txt air/gen_1778050856_39.txt air/gen_1778050859_40.txt air/gen_1778050862_41.txt air/gen_1778050864_42.txt air/gen_1778050867_43.txt air/gen_1778050873_45.txt air/gen_1778050875_46.txt air/gen_1778050883_49.txt air/gen_1778050889_51.txt air/gen_1778050891_52.txt air/gen_1778050894_53.txt air/gen_1778050897_54.txt air/gen_1778050900_55.txt air/gen_1778050905_57.txt air/gen_1778050908_58.txt air/gen_1778050911_59.txt air/gen_1778050916_61.txt air/gen_1778050922_63.txt air/gen_1778050924_64.txt air/gen_1778050927_65.txt air/gen_1778050933_67.txt air/gen_1778050938_69.txt air/gen_1778050941_70.txt air/gen_1778050944_71.txt air/gen_1778050949_73.txt air/gen_1778050955_75.txt air/gen_1778050957_76.txt air/gen_1778050965_79.txt air/gen_1778050971_81.txt air/gen_1778050973_82.txt air/gen_1778050976_83.txt air/gen_1778050979_84.txt air/gen_1778050982_85.txt air/gen_1778050987_87.txt air/gen_1778050990_88.txt air/gen_1778050995_90.txt air/gen_1778050998_91.txt air/gen_1778051003_93.txt air/gen_1778051006_94.txt air/gen_1778051014_97.txt air/gen_1778051020_99.txt air/gen_1778051022_100.txt air/gen_1778051031_103.txt air/gen_1778051036_105.txt air/gen_1778051039_106.txt air/gen_1778051047_109.txt air/gen_1778051055_112.txt air/gen_1778051058_113.txt air/gen_1778051064_115.txt air/gen_1778051069_117.txt air/gen_1778051072_118.txt air/gen_1778051077_120.txt air/gen_1778051080_121.txt air/gen_1778051085_123.txt air/gen_1778051088_124.txt air/gen_1778051091_125.txt air/gen_1778051094_126.txt air/gen_1778051096_127.txt air/gen_1778051104_130.txt air/gen_1778051107_131.txt air/gen_1778051112_133.txt air/gen_1778051118_135.txt air/gen_1778051121_136.txt air/gen_1778051123_137.txt air/gen_1778051126_138.txt air/gen_1778051129_139.txt air/gen_1778051134_141.txt air/gen_1778051137_142.txt air/gen_1778051142_144.txt air/gen_1778051145_145.txt air/gen_1778051151_147.txt air/gen_1778051154_148.txt air/gen_1778051159_150.txt air/gen_1778051162_151.txt air/gen_1778051167_153.txt air/gen_1778051170_154.txt air/gen_1778051173_155.txt air/gen_1778051176_156.txt air/gen_1778051178_157.txt air/gen_1778051184_159.txt air/gen_1778051187_160.txt air/gen_1778051192_162.txt air/gen_1778051195_163.txt air/gen_1778051200_165.txt air/gen_1778051203_166.txt air/gen_1778051206_167.txt air/gen_1778051211_169.txt air/gen_1778051217_171.txt air/gen_1778051220_172.txt air/gen_1778051225_174.txt air/gen_1778051228_175.txt air/gen_1778051233_177.txt air/gen_1778051236_178.txt air/gen_1778051239_179.txt air/gen_1778051242_180.txt air/gen_1778051244_181.txt air/gen_1778051250_183.txt air/gen_1778051253_184.txt air/gen_1778051258_186.txt air/gen_1778051261_187.txt air/gen_1778051266_189.txt air/gen_1778051269_190.txt air/gen_1778051275_192.txt air/gen_1778051278_193.txt air/gen_1778051283_195.txt air/gen_1778051286_196.txt air/gen_1778051289_197.txt air/gen_1778051291_198.txt air/gen_1778051294_199.txt air/gen_1778051300_201.txt air/gen_1778051302_202.txt air/gen_1778051305_203.txt air/gen_1778051311_205.txt air/gen_1778051316_207.txt air/gen_1778051319_208.txt air/gen_1778051322_209.txt air/gen_1778051325_210.txt air/gen_1778051327_211.txt air/gen_1778051333_213.txt air/gen_1778051336_214.txt air/gen_1778051338_215.txt air/gen_1778051341_216.txt air/gen_1778051344_217.txt air/gen_1778051350_219.txt air/gen_1778051352_220.txt air/gen_1778051358_222.txt air/gen_1778051360_223.txt air/gen_1778051369_226.txt air/gen_1778051377_229.txt air/gen_1778051382_231.txt air/gen_1778051385_232.txt air/gen_1778051388_233.txt air/gen_1778051393_235.txt air/gen_1778051399_237.txt air/gen_1778051402_238.txt air/gen_1778051405_239.txt air/gen_1778051410_241.txt air/gen_1778051416_243.txt air/gen_1778051418_244.txt air/gen_1778051424_246.txt air/gen_1778051427_247.txt air/gen_1778051432_249.txt air/gen_1778051435_250.txt air/gen_1778051438_251.txt air/gen_1778051441_252.txt air/gen_1778051443_253.txt air/gen_1778051449_255.txt air/gen_1778051452_256.txt air/gen_1778051454_257.txt air/gen_1778051457_258.txt air/gen_1778051460_259.txt air/gen_1778051465_261.txt air/gen_1778051468_262.txt air/gen_1778051471_263.txt air/gen_1778051477_265.txt air/gen_1778051485_268.txt air/gen_1778051491_270.txt air/gen_1778051494_271.txt air/gen_1778051499_273.txt air/gen_1778051502_274.txt air/gen_1778051508_276.txt air/gen_1778051511_277.txt air/gen_1778051516_279.txt air/gen_1778051519_280.txt air/gen_1778051525_282.txt air/gen_1778051527_283.txt air/gen_1778051533_285.txt air/gen_1778051536_286.txt air/gen_1778051541_288.txt air/gen_1778051544_289.txt air/gen_1778051550_291.txt air/gen_1778051552_292.txt air/gen_1778051555_293.txt air/gen_1778051561_295.txt air/gen_1778051567_297.txt air/gen_1778051569_298.txt air/gen_1778051572_299.txt air/gen_1778051575_300.txt air/gen_1778051578_301.txt air/gen_1778051584_303.txt air/gen_1778051586_304.txt air/gen_1778051589_305.txt air/gen_1778051595_307.txt air/gen_1778051601_309.txt air/gen_1778051603_310.txt air/gen_1778051606_311.txt air/gen_1778051609_312.txt air/gen_1778051612_313.txt air/gen_1778051617_315.txt air/gen_1778051620_316.txt air/gen_1778051623_317.txt air/gen_1778051629_319.txt air/gen_1778051634_321.txt air/gen_1778051637_322.txt air/gen_1778051640_323.txt air/gen_1778051643_324.txt air/gen_1778051646_325.txt air/gen_1778051651_327.txt air/gen_1778051654_328.txt air/gen_1778051660_330.txt air/gen_1778051663_331.txt air/gen_1778051669_333.txt air/gen_1778051671_334.txt air/gen_1778051680_337.txt air/gen_1778051685_339.txt air/gen_1778051688_340.txt air/gen_1778051694_342.txt air/gen_1778051697_343.txt air/gen_1778051705_346.txt air/gen_1778051708_347.txt air/gen_1778051711_348.txt air/gen_1778051714_349.txt air/gen_1778051719_351.txt air/gen_1778051722_352.txt air/gen_1778051730_355.txt air/gen_1778051736_357.txt air/gen_1778051738_358.txt air/gen_1778051741_359.txt air/gen_1778051747_361.txt air/gen_1778051752_363.txt air/gen_1778051755_364.txt air/gen_1778051758_365.txt air/gen_1778051761_366.txt air/gen_1778051764_367.txt air/gen_1778051769_369.txt air/gen_1778051772_370.txt air/gen_1778051780_373.txt air/gen_1778051786_375.txt air/gen_1778051788_376.txt air/gen_1778051794_378.txt air/gen_1778051797_379.txt air/gen_1778051802_381.txt air/gen_1778051805_382.txt air/gen_1778051808_383.txt air/gen_1778051811_384.txt air/gen_1778051813_385.txt air/gen_1778051821_388.txt air/gen_1778051824_389.txt air/gen_1778051827_390.txt air/gen_1778051830_391.txt air/gen_1778051835_393.txt air/gen_1778051838_394.txt air/gen_1778051841_395.txt air/gen_1778051844_396.txt air/gen_1778051846_397.txt air/gen_1778051852_399.txt air/gen_1778051855_400.txt air/gen_1778051863_403.txt air/gen_1778051869_405.txt air/gen_1778051871_406.txt air/gen_1778051874_407.txt air/gen_1778051880_409.txt air/gen_1778051886_411.txt air/gen_1778051888_412.txt air/gen_1778051897_415.txt air/gen_1778051902_417.txt air/gen_1778051905_418.txt air/gen_1778051913_421.txt air/gen_1778051919_423.txt air/gen_1778051922_424.txt air/gen_1778051928_426.txt air/gen_1778051930_427.txt air/gen_1778051939_430.txt air/gen_1778051941_431.txt air/gen_1778051944_432.txt air/gen_1778051947_433.txt air/gen_1778051953_435.txt air/gen_1778051955_436.txt air/gen_1778051964_439.txt air/gen_1778051969_441.txt air/gen_1778051972_442.txt air/gen_1778051978_444.txt air/gen_1778051981_445.txt air/gen_1778051986_447.txt air/gen_1778051989_448.txt air/gen_1778051992_449.txt air/gen_1778051995_450.txt air/gen_1778051997_451.txt air/gen_1778052003_453.txt air/gen_1778052006_454.txt air/gen_1778052011_456.txt air/gen_1778052014_457.txt air/gen_1778052019_459.txt air/gen_1778052022_460.txt air/gen_1778052025_461.txt air/gen_1778052031_463.txt air/gen_1778052036_465.txt air/gen_1778052039_466.txt air/gen_1778052045_468.txt air/gen_1778052048_469.txt air/gen_1778052053_471.txt air/gen_1778052056_472.txt air/gen_1778052059_473.txt air/gen_1778052064_475.txt air/gen_1778052070_477.txt air/gen_1778052073_478.txt air/gen_1778052075_479.txt air/gen_1778052078_480.txt air/gen_1778052081_481.txt air/gen_1778052087_483.txt air/gen_1778052089_484.txt air/gen_1778052095_486.txt air/gen_1778052098_487.txt air/gen_1778052103_489.txt air/gen_1778052106_490.txt air/gen_1778052109_491.txt air/gen_1778052114_493.txt air/gen_1778052120_495.txt air/gen_1778052123_496.txt air/gen_1778052125_497.txt air/gen_1778052128_498.txt air/gen_1778052131_499.txt air/gen_1778052137_501.txt air/gen_1778052140_502.txt air/gen_1778052142_503.txt air/gen_1778052145_504.txt air/gen_1778052148_505.txt air/gen_1778052154_507.txt air/gen_1778052157_508.txt air/gen_1778052159_509.txt air/gen_1778052162_510.txt air/gen_1778052165_511.txt air/gen_1778052171_513.txt air/gen_1778052173_514.txt air/gen_1778052182_517.txt air/gen_1778052187_519.txt air/gen_1778052190_520.txt air/gen_1778052199_523.txt air/gen_1778052204_525.txt air/gen_1778052207_526.txt air/gen_1778052210_527.txt air/gen_1778052213_528.txt air/gen_1778052216_529.txt air/gen_1778052221_531.txt air/gen_1778052224_532.txt air/gen_1778052230_534.txt air/gen_1778052233_535.txt air/gen_1778052238_537.txt air/gen_1778052241_538.txt air/gen_1778052244_539.txt air/gen_1778052250_541.txt air/gen_1778052255_543.txt air/gen_1778052258_544.txt air/gen_1778052261_545.txt air/gen_1778052264_546.txt air/gen_1778052267_547.txt air/gen_1778052275_550.txt air/gen_1778052281_552.txt air/gen_1778052284_553.txt air/gen_1778052289_555.txt air/gen_1778052292_556.txt air/gen_1778052298_558.txt air/gen_1778052300_559.txt air/gen_1778052306_561.txt air/gen_1778052309_562.txt air/gen_1778052315_564.txt air/gen_1778052317_565.txt air/gen_1778052323_567.txt air/gen_1778052326_568.txt air/gen_1778052329_569.txt air/gen_1778052334_571.txt air/gen_1778052340_573.txt air/gen_1778052343_574.txt air/gen_1778052351_577.txt air/gen_1778052357_579.txt air/gen_1778052359_580.txt air/gen_1778052362_581.txt air/gen_1778052365_582.txt air/gen_1778052368_583.txt air/gen_1778052373_585.txt air/gen_1778052376_586.txt air/gen_1778052379_587.txt air/gen_1778052382_588.txt air/gen_1778052385_589.txt air/gen_1778052390_591.txt air/gen_1778052393_592.txt air/gen_1778052399_594.txt air/gen_1778052402_595.txt air/gen_1778052407_597.txt air/gen_1778052410_598.txt air/gen_1778052416_600.txt air/gen_1778052419_601.txt air/gen_1778052424_603.txt air/gen_1778052427_604.txt air/gen_1778052430_605.txt air/gen_1778052436_607.txt air/gen_1778052441_609.txt air/gen_1778052444_610.txt air/gen_1778052450_612.txt air/gen_1778052453_613.txt air/gen_1778052459_615.txt air/gen_1778052461_616.txt air/gen_1778052464_617.txt air/gen_1778052470_619.txt air/gen_1778052476_621.txt air/gen_1778052478_622.txt air/gen_1778052481_623.txt air/gen_1778052484_624.txt air/gen_1778052487_625.txt air/gen_1778052492_627.txt air/gen_1778052495_628.txt air/gen_1778052498_629.txt air/gen_1778052501_630.txt air/gen_1778052503_631.txt air/gen_1778052509_633.txt air/gen_1778052512_634.txt air/gen_1778052515_635.txt air/gen_1778052517_636.txt air/gen_1778052520_637.txt air/gen_1778052526_639.txt air/gen_1778052528_640.txt air/gen_1778052531_641.txt air/gen_1778052537_643.txt]
+[trainer] micro-train burst (34051 bytes, novelty 0.02) — and lo, it feeds again.
+[syntropy] action=explore | trend=0.0000 | field_dev=0.011 | purpose_align=-0.237 | lr_mul=1.30
+[aml] burst complete: 32 steps, avg loss 1.6247 (memory freed)
+[dna] water wrote 30 bytes to ecology
+[dna] water wrote 50 bytes to ecology
+[dna] water wrote 20 bytes to ecology
+[dna] water wrote 133 bytes to ecology
+[dna] water wrote 90 bytes to ecology
+[dna] water wrote 62 bytes to ecology
+[dna] water wrote 11 bytes to ecology
+[dna] water wrote 103 bytes to ecology
+[dna] water wrote 84 bytes to ecology
+[dna] water wrote 151 bytes to ecology
+[dna] water wrote 41 bytes to ecology
+[dna] water wrote 33 bytes to ecology
+[dna] water wrote 33 bytes to ecology
+[dna] water wrote 59 bytes to ecology
+[dna] water wrote 30 bytes to ecology
+[dna] water wrote 148 bytes to ecology
+[debug-onto] tick=50 corpus=160184 stage=2 freeze=0
+[dna] water wrote 37 bytes to ecology
+[dna] water wrote 50 bytes to ecology
+[dna] water wrote 110 bytes to ecology
+[dna] water wrote 67 bytes to ecology
+[dna] water wrote 147 bytes to ecology
+[dna] water wrote 39 bytes to ecology
+[dna] water wrote 44 bytes to ecology
+[dna] water wrote 50 bytes to ecology
+[dna] water wrote 73 bytes to ecology
+[dna] water wrote 135 bytes to ecology
+[dna] water wrote 149 bytes to ecology
+[dna] water wrote 77 bytes to ecology
+[dna] water wrote 56 bytes to ecology
+[dna] water wrote 82 bytes to ecology
+[dna] water wrote 56 bytes to ecology
+[dna] water wrote 54 bytes to ecology
+[dna] water wrote 51 bytes to ecology
+[dna] water wrote 82 bytes to ecology
+[debug-onto] tick=100 corpus=160184 stage=2 freeze=0
+[dna] water wrote 40 bytes to ecology
+[dna] water wrote 33 bytes to ecology
+[dna] water wrote 43 bytes to ecology
+[dna] water wrote 52 bytes to ecology
+[dna] water wrote 76 bytes to ecology
+[dna] water wrote 64 bytes to ecology
+[dna] water wrote 56 bytes to ecology
+[dna] water wrote 62 bytes to ecology
+[dna] water wrote 56 bytes to ecology
+[dna] water wrote 48 bytes to ecology
+[dna] water wrote 63 bytes to ecology
+[dna] water wrote 163 bytes to ecology
+[dna] water wrote 83 bytes to ecology
+[dna] water wrote 110 bytes to ecology
+[dna] water wrote 160 bytes to ecology
+[dna] water wrote 43 bytes to ecology
+[debug-onto] tick=150 corpus=160184 stage=2 freeze=0
+[dna] water wrote 30 bytes to ecology
+[dna] water wrote 67 bytes to ecology
+[dna] water wrote 183 bytes to ecology
+[dna] water wrote 99 bytes to ecology
+[dna] water wrote 90 bytes to ecology
+[dna] water wrote 67 bytes to ecology
+[dna] water wrote 82 bytes to ecology
+[dna] water wrote 28 bytes to ecology
+[dna] water wrote 66 bytes to ecology
+[dna] water wrote 26 bytes to ecology
+[dna] water wrote 80 bytes to ecology
+[dna] water wrote 108 bytes to ecology
+[dna] water wrote 77 bytes to ecology
+[dna] water wrote 28 bytes to ecology
+[dna] water wrote 42 bytes to ecology
+[dna] water wrote 45 bytes to ecology
+[dna] water wrote 68 bytes to ecology
+[debug-onto] tick=200 corpus=160184 stage=2 freeze=0
+[dna] water wrote 26 bytes to ecology
+[dna] water wrote 260 bytes to ecology
+[dna] water wrote 73 bytes to ecology
+[dna] water wrote 28 bytes to ecology
+[dna] water wrote 60 bytes to ecology
+[dna] water wrote 75 bytes to ecology
+[dna] water wrote 72 bytes to ecology
+[dna] water wrote 55 bytes to ecology
+[dna] water wrote 56 bytes to ecology
+[dna] water wrote 96 bytes to ecology
+[dna] water wrote 201 bytes to ecology
+[dna] water wrote 72 bytes to ecology
+[dna] water wrote 184 bytes to ecology
+[dna] water wrote 53 bytes to ecology
+[dna] water wrote 69 bytes to ecology
+[dna] water wrote 91 bytes to ecology
+[dna] water wrote 313 bytes to ecology
+[dna] water wrote 42 bytes to ecology
+[debug-onto] tick=250 corpus=160184 stage=2 freeze=0
+[dna] water wrote 68 bytes to ecology
+[dna] water wrote 47 bytes to ecology
+[dna] water wrote 88 bytes to ecology
+[dna] water wrote 36 bytes to ecology
+[dna] water wrote 90 bytes to ecology
+[dna] water wrote 28 bytes to ecology
+[dna] water wrote 72 bytes to ecology
+[dna] water wrote 35 bytes to ecology
+[dna] water wrote 39 bytes to ecology
+[dna] water wrote 61 bytes to ecology
+[dna] water wrote 25 bytes to ecology
+[dna] water wrote 109 bytes to ecology
+[dna] water wrote 84 bytes to ecology
+[dna] water wrote 179 bytes to ecology
+[dna] water wrote 27 bytes to ecology
+[dna] water wrote 94 bytes to ecology
+[debug-onto] tick=300 corpus=160184 stage=2 freeze=0
+[dna] water wrote 89 bytes to ecology
+[dna] water wrote 56 bytes to ecology
+[dna] water wrote 62 bytes to ecology
+[dna] water wrote 98 bytes to ecology
+[dna] water wrote 38 bytes to ecology
+[dna] water wrote 42 bytes to ecology
+[dna] water wrote 67 bytes to ecology
+[dna] water wrote 72 bytes to ecology
+[dna] water wrote 34 bytes to ecology
+[dna] water wrote 75 bytes to ecology
+[dna] water wrote 177 bytes to ecology
+[dna] water wrote 96 bytes to ecology
+[dna] water wrote 141 bytes to ecology
+[dna] water wrote 50 bytes to ecology
+[dna] water wrote 27 bytes to ecology
+[dna] water wrote 85 bytes to ecology
+[dna] water wrote 59 bytes to ecology
+[dna] water wrote 64 bytes to ecology
+[debug-onto] tick=350 corpus=160184 stage=2 freeze=0
+[dna] water wrote 51 bytes to ecology
+[dna] water wrote 121 bytes to ecology
+[dna] water wrote 53 bytes to ecology
+[dna] water wrote 121 bytes to ecology
+[dna] water wrote 174 bytes to ecology
+[dna] water wrote 145 bytes to ecology
+[dna] water wrote 67 bytes to ecology
+[dna] water wrote 103 bytes to ecology
+[dna] water wrote 9 bytes to ecology
+[dna] water wrote 40 bytes to ecology
+[dna] water wrote 126 bytes to ecology
+[dna] water wrote 39 bytes to ecology
+[dna] water wrote 163 bytes to ecology
+[dna] water wrote 74 bytes to ecology
+[dna] water wrote 104 bytes to ecology
+[dna] water wrote 30 bytes to ecology
+[dna] water wrote 41 bytes to ecology
+[dna] water wrote 14 bytes to ecology
+[debug-onto] tick=400 corpus=160184 stage=2 freeze=0
+[dna] water wrote 60 bytes to ecology
+[dna] water wrote 10 bytes to ecology
+[dna] water wrote 79 bytes to ecology
+[dna] water wrote 145 bytes to ecology
+[dna] water wrote 57 bytes to ecology
+[dna] water wrote 36 bytes to ecology
+[dna] water wrote 34 bytes to ecology
+[dna] water wrote 28 bytes to ecology
+[dna] water wrote 122 bytes to ecology
+[dna] water wrote 127 bytes to ecology
+[dna] water wrote 145 bytes to ecology
+[dna] water wrote 24 bytes to ecology
+[dna] water wrote 80 bytes to ecology
+[dna] water wrote 89 bytes to ecology
+[dna] water wrote 67 bytes to ecology
+[dna] water wrote 33 bytes to ecology
+[debug-onto] tick=450 corpus=160184 stage=2 freeze=0
+[dna] water wrote 59 bytes to ecology
+[dna] water wrote 56 bytes to ecology
+[dna] water wrote 71 bytes to ecology
+[dna] water wrote 45 bytes to ecology
+[dna] water wrote 54 bytes to ecology
+[dna] water wrote 28 bytes to ecology
+[dna] water wrote 30 bytes to ecology
+[dna] water wrote 35 bytes to ecology
+[dna] water wrote 35 bytes to ecology
+[dna] water wrote 75 bytes to ecology
+[dna] water wrote 112 bytes to ecology
+[dna] water wrote 57 bytes to ecology
+[dna] water wrote 47 bytes to ecology
+[dna] water wrote 151 bytes to ecology
+[dna] water wrote 31 bytes to ecology
+[dna] water wrote 130 bytes to ecology
+[dna] water wrote 51 bytes to ecology
+[dna] water wrote 71 bytes to ecology
+[debug-onto] tick=500 corpus=160184 stage=2 freeze=0
+[dna] water wrote 42 bytes to ecology
+[dna] water wrote 109 bytes to ecology
+[dna] water wrote 101 bytes to ecology
+[dna] water wrote 92 bytes to ecology
+[dna] water wrote 45 bytes to ecology
+[dna] water wrote 22 bytes to ecology
+[dna] water wrote 78 bytes to ecology
+[dna] water wrote 104 bytes to ecology
+[dna] water wrote 38 bytes to ecology
+[dna] water wrote 47 bytes to ecology
+[dna] water wrote 108 bytes to ecology
+[dna] water wrote 10 bytes to ecology
+[dna] water wrote 89 bytes to ecology
+[dna] water wrote 62 bytes to ecology
+[dna] water wrote 25 bytes to ecology
+[dna] water wrote 24 bytes to ecology
+[dna] water wrote 79 bytes to ecology
+[debug-onto] tick=550 corpus=160184 stage=2 freeze=0
+[dna] water wrote 43 bytes to ecology
+[dna] water wrote 70 bytes to ecology
+[dna] water wrote 32 bytes to ecology
+[dna] water wrote 55 bytes to ecology
+
+[evolution] Organism shutting down gracefully.
