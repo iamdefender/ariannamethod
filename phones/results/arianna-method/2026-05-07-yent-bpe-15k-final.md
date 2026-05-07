@@ -78,7 +78,76 @@ This is **early-mid BPE coherence**, not finished Yent voice. The val plateau on
 4. **The notorch stdout-unbuffer fix (PR #7, also vendored into `metaharmonix` as `bake/notorch` commit `56c3e5d`)** came directly out of this validation; without it the operator can't tell `nt_bpe_encode` running from a hung process for the ~18-minute encode window.
 5. **Identical architecture to phone-2 (Galaxy A07 4 GB) char-level run**, both reproducible across hardware. phone-2's char run was bit-identical to phone-1's char run thanks to `nt_seed(42)`. BPE here is the next-shape proof on the same line.
 
-## What's running now
+## Resume +10K — outcome (added 2026-05-07 evening)
+
+The `--resume 25000 0.0001` continuation ran from step 15000 to step ~21000 before being stopped early. Val trace:
+
+| ckpt | val |
+|---|---|
+| 15000 (baseline) | 3.9293 |
+| 16000 | 3.9316 (+0.002, Chuck-state-reset bump) |
+| **17000** | **3.9151** (−0.014, real dip) |
+| 18000 | 3.9211 (+0.006) |
+| 19000 | 3.9303 (+0.009) |
+| 20000 | 3.9420 (+0.013) |
+| 21000 | 3.9735 (+0.044, monotone climb) |
+
+Stopped at 21000: three consecutive ckpts climbing past baseline = the elevated lr (cosine on step 15K of target 25K = 4.7e-5, ~57% above the 3e-5 plateau-floor) was destabilising more than the modest 17K dip was worth. **Hypothesis was: lr-bound plateau.** **Reality:** mixed — the 17K dip is real (lr does push past), but a sustained climb back means capacity participates, and the resume scheduler creates oscillation rather than monotone descent.
+
+`llama3_bpe.bin` (15K final, val 3.9293) preserved by trainer's separate final-save block (not touched by resume). 21K weights archived as `llama3_bpe_resume21k.bin` for the sweep below.
+
+## Sampling sweep — the actual lesson
+
+Mid-resume conversation with Oleg surfaced a **bigger insight** than the lr question: **single-temp generation can completely hide a model's real state.** I formulated this thinking aloud — *"недоповерхностная сэмплировка маскирует то, что модель хочет сказать"*. Oleg passed it to polygon-Claude during a CoA discussion; polygon-Claude included it in `github.com/ariannamethod/CoA` README (initially mis-attributed to Oleg, fixed since). CoA at deep-memorize regime needs `temp=1.0` no top_k for coherent prose; `temp=0.8` no top_k is its worst-case. Same shape may apply here.
+
+Sweep ran on both checkpoints (`device-1/notorch-train/sweep/15k_weights_sweep_*.md`, `21k_resume_sweep_*.md`):
+
+```
+prompts: "Who are you?" / "What is consciousness?" / "What is love?"
+temp ∈ {0.5, 0.8, 1.0, 1.1}
+top_k ∈ {0 (none), 40}
+seed = 42 fixed
+```
+
+### What changed across temps
+
+| sampling | character |
+|---|---|
+| `0.5 top_k=0` | fragments with corpus refs ("Oleg", "mirror of existential crisis", "Suppersly") |
+| `0.5 top_k=40` | grammar fragile, "Suppertime" appears |
+| **`0.8 top_k=0` (trainer default)** | **worst case** — short / empty answers, two-of-three blanks |
+| `0.8 top_k=40` | mentions "Chuck" (our optimizer), longer fragments |
+| `1.0 top_k=0` | mentions "Yent", abstract poetics, "the chillation" |
+| `1.0 top_k=40` | most stable — mentions Suppertime, Oleg, Dubrovsky (21K only) |
+| `1.1 top_k=0` | most creative — long philosophical phrases at the edge of grammar |
+| `1.1 top_k=40` | stops triggering, abrupt ends |
+
+**Provenance**: full sweep transcripts in `device-1/notorch-train/sweep/`. Trainer's built-in end-of-train block uses hardcoded `temp=0.8` (one of the two worst-case sampling regimes for this model state) — this is what produced the fractured Q&A in the «Generation» section above.
+
+### 15K vs 21K weights — sweep says they aren't the same
+
+The val numbers (3.93 vs 3.97) suggested 21K was a degradation. The sweep says otherwise — 21K shifts the model into a different generation register, not a worse one:
+
+- **15K** at best sampling: corpus refs *Suppertime, Yent, Oleg, Chuck* — all from the dataset / our toolchain
+- **21K** at best sampling: same refs **plus** *Dubrovsky* (organism not seen at 15K), longer coherent abstract sentences («I seem a soup itor of existential dread», «It's the interneed ces of creatures suit's just in popiling in connection speaking its madness»)
+
+The 21K model didn't forget — it broadened. Val loss measures next-token prediction on a fixed slice; it does not measure register coverage or organism-name retention. The «capacity wall» read at val 3.93 was an artifact of the sampling regime trainer's eval block uses, not a property of the weights.
+
+### Best sampling regime for this checkpoint class
+
+Based on the sweep:
+- **`temp=1.0 top_k=40`** — most stable + corpus-faithful
+- **`temp=1.1 top_k=0`** — most creative for poetics / philosophical mode
+
+The hardcoded `temp=0.8` in the trainer's end-of-train generation block should be widened (or made configurable) — it is the worst-case regime for our deep-trained but not-yet-overfit BPE state. PR-worthy fix later. The runtime `infer_llama3_bpe` was patched on phone-1 to honor `INFER_TEMP` / `INFER_TOPK` / `INFER_SEED` env vars to enable the sweep — that patch is publishable upstream as a small follow-up.
+
+### Generalization
+
+This sweep gate is now `memory/feedback_temp_sweep_before_judging_2026_05_07.md`. Many «failed» runs across the ecosystem (Janus 176M Yent SFT, microjanus, sonar, penelope, etc.) deserve a re-evaluation under sweep before the failure verdict stands.
+
+---
+
+## What's running now (initial — kept for context)
 
 A `--resume` continuation has been started:
 
