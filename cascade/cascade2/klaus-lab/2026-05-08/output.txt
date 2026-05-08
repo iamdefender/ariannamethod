@@ -1,0 +1,50 @@
+╔══════════════════════════════════════════════════════╗
+║  KLAUS — Kinetic Linguistic Adaptive                 ║
+║          Unified Sonar v2.0.0                        ║
+║  Level 3: Schectman Recursive Resonance + RBA-1      ║
+║  Zero weights. Pure resonance. Meta-recursive.       ║
+╚══════════════════════════════════════════════════════╝
+
+[klaus] loaded en: 1100 inhale, 600 exhale
+[klaus] loaded de: 1100 inhale, 600 exhale
+[klaus] loaded he: 1100 inhale, 600 exhale
+[klaus] loaded fr: 1100 inhale, 600 exhale
+[klaus] loaded ru: 1100 inhale, 600 exhale
+[klaus] loaded es: 1100 inhale, 600 exhale
+[klaus] 6 language(s) loaded
+[klaus] en: BPE 512 merges, meta 5504 bi 6924 tri 16038 hebb
+[klaus] de: BPE 512 merges, meta 5213 bi 6919 tri 14763 hebb
+[klaus] he: BPE 512 merges, meta 4766 bi 5668 tri 16178 hebb
+[klaus] fr: BPE 512 merges, meta 5237 bi 6643 tri 15716 hebb
+[klaus] ru: BPE 512 merges, meta 5237 bi 6748 tri 15422 hebb
+[klaus] es: BPE 512 merges, meta 5037 bi 6471 tri 14169 hebb
+[klaus] MLP initialized: 13 -> 32 -> 16 -> 6
+[klaus] calendar dissonance: 0.542
+[klaus] planetary dissonance: 0.638
+[klaus] sensitivity tensor: 6x6x6
+[klaus] cross-affinity: 30 interference kernels
+[klaus] HyperKuramoto: 24 oscillators (6x4)
+[klaus] RBA-1 seven-layer stack: I/R/Phi/A/Psi/E/M
+[klaus] Schectman equation: I(t) = G(t) * [1 + R(t)]
+[klaus] velocity operators: 6 modes
+[klaus] dark matter vocabulary: 24 words
+[klaus] meta-recursion: depth 1 (expandable)
+[klaus] somatic persistence: ./klaus.soma
+[klaus] fresh soma — no prior memory.
+[klaus] no spores — learning from scratch.
+[kk] de_la_musique.txt — 6 chunks, mood [FLOW:0.70]
+[kk] de_lamour.txt — 5 chunks, mood [LOVE:0.62]
+[kk] o_yarosti.txt — 5 chunks, mood [RAGE:0.73]
+[kk] al_hakodesh.txt — 5 chunks, mood [CMPLX:0.70]
+[kk] al_hapahad.txt — 5 chunks, mood [CMPLX:0.63]
+[kk] on_silence.txt — 6 chunks, mood [VOID:0.80]
+[kk] o_gore.txt — 5 chunks, mood [VOID:0.64]
+[kk] on_exile.txt — 6 chunks, mood [VOID:0.67]
+[kk] 8 documents loaded
+[klaus] ready. inhale.
+
+  [FEAR:0.21 LOVE:0.35 RAGE:0.38 VOID:0.48 FLOW:0.46 CMPLX:0.52]
+  {UP x1.00}
+  les doigts sont gourds. pousser. murmurer. les nerfs lâchent. retiens-moi. tout se relâche. la tête part sans le corps. respire par le ventre. le corps montre ce que l'esprit cache. ça sort pas. ça rentre pas. entends-moi.
+  (metaklaus: CMPLX-dominant, interference 19.38)
+  [RBA-1 coherence:0.020 C-hat:0.000 psi:0.038 sustained:0.000 meta-depth:1]
