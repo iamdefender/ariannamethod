@@ -1,0 +1,19 @@
+extended vocab: 2749 words (1984 hardcoded + 765 from BPE)
+Weights loaded from janus-src/weights/nanojanus.bin (PEN7 format)
+[nanojanus] resonance engine: 1984 words, BPE 2048, 8 layers, 7 heads, DIM=448, 19619280 params (19.6M)
+
+  ^11  eye              debt=0.00
+  ^10  auditor          debt=0.00
+  ^9   ers              debt=0.00
+  ^8   sill             debt=0.00
+                 * vine *                 [ORIGIN]
+  v0   modesty          debt=0.00
+  v1   saw              debt=0.00
+  v2   alms             debt=0.00
+  v3   sap              debt=0.00
+  v4   root             debt=0.00
+  v5   brass            debt=0.00
+  v6   garland          debt=0.00
+  v7   satin            debt=0.00
+
+drift=18.67  diss=0.566  personal=0.000  debt=0.000  prophecy_acc=0.494  bpe=2048  words=1984  ext_vocab=2749  params=19619280  layers=8  trained=True
